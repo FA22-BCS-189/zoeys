@@ -136,7 +136,7 @@ const Shop = () => {
   const handleCollectionChange = (slug) => {
     setSelectedCollection(slug);
     if (slug) {
-      navigate(`/${slug}`);
+      navigate(`/collection/${slug}`);
     } else {
       navigate('/shop');
     }
