@@ -1,0 +1,374 @@
+/* Clean Modern Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #fdfcfb;
+    color: #2c2c2c;
+    font-family: 'Montserrat', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    color: #2c2c2c;
+  }
+
+  /* Text shadows removed for clean look */
+  h1 {
+    text-shadow: none;
+  }
+}
+
+@layer components {
+  /* Primary Button - Emerald to Navy Gradient */
+  .btn-primary {
+    background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+    color: #fcfbf9;
+    font-weight: 600;
+    padding: 0.625rem 2rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid rgba(34, 139, 99, 0.3);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #1c7251 0%, #235a7a 50%, #1e3049 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-primary:hover::before {
+    left: 100%;
+  }
+
+  /* Secondary Button - Navy to Emerald Gradient */
+  .btn-secondary {
+    background: linear-gradient(135deg, #253b56 0%, #2a6b8f 50%, #228b63 100%);
+    color: #fcfbf9;
+    font-weight: 600;
+    padding: 0.625rem 2rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid rgba(37, 59, 86, 0.3);
+  }
+
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, #1e3049 0%, #235a7a 50%, #1c7251 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+  }
+
+  /* Outline Button - Emerald to Navy Border Gradient */
+  .btn-outline {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #228b63, #2a6b8f, #253b56) 1;
+    color: #228b63;
+    font-weight: 600;
+    padding: 0.625rem 2rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  .btn-outline:hover {
+    background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+    color: #fcfbf9;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border-image: none;
+    border: 2px solid transparent;
+  }
+
+  /* Clean Card */
+  .card {
+    background: rgba(252, 251, 249, 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.3s ease-in-out;
+    border: 1px solid rgba(142, 211, 185, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  }
+
+  /* Container with max width */
+  .container-custom {
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Section padding */
+  .section-padding {
+    padding: 3rem 0;
+  }
+
+  /* Simple Divider */
+  .divider-ornate {
+    position: relative;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(91, 189, 151, 0.4), transparent);
+    margin: 2rem 0;
+  }
+
+  /* Text Shadow removed */
+  .text-shadow-luxury {
+    text-shadow: none;
+  }
+
+  /* Emerald to Navy Gradient Text */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer Effect for CTAs */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer-slide 3s infinite;
+  }
+
+  @keyframes shimmer-slide {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+}
+
+/* Emerald to Navy Gradient Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f9f7f5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1c7251 0%, #235a7a 50%, #1e3049 100%);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Skeleton Loading */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2.5s infinite linear;
+  background: linear-gradient(
+    to right, 
+    rgba(253, 252, 251, 0.8) 4%, 
+    rgba(34, 139, 99, 0.1) 25%, 
+    rgba(253, 252, 251, 0.8) 36%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Fade In Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Clean Shadow Utilities */
+.shadow-subtle {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.shadow-soft {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.shadow-prominent {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* Emerald Border */
+.border-ornate {
+  border: 1px solid rgba(142, 211, 185, 0.3);
+}
+
+/* Gradient Text for Headings */
+.heading-gradient {
+  background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+/* Emerald to Navy Accent Text */
+.heading-accent {
+  background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Price Tag Style */
+.price-luxury {
+  color: #228b63;
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+}
+
+/* Hover lift effect for cards */
+.hover-lift {
+  transition: all 0.3s ease-in-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Backdrop blur for modals */
+.backdrop-luxury {
+  backdrop-filter: blur(8px);
+  background-color: rgba(44, 44, 44, 0.4);
+}
+
+/* Selection color */
+::selection {
+  background: linear-gradient(135deg, rgba(34, 139, 99, 0.2) 0%, rgba(42, 107, 143, 0.2) 50%, rgba(37, 59, 86, 0.2) 100%);
+  color: #2c2c2c;
+}
+
+::-moz-selection {
+  background: linear-gradient(135deg, rgba(34, 139, 99, 0.2) 0%, rgba(42, 107, 143, 0.2) 50%, rgba(37, 59, 86, 0.2) 100%);
+  color: #2c2c2c;
+}
+
+/* Scrollbar hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Scrollbar for Filter Sidebar - Emerald to Navy Gradient */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%) #f9f7f5;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f9f7f5;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #228b63 0%, #2a6b8f 50%, #253b56 100%);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1c7251 0%, #235a7a 50%, #1e3049 100%);
+}
+
+/* Simple Divider with Emerald to Navy Gradient */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #228b63, #2a6b8f, #253b56, transparent);
+  margin: 1rem auto;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

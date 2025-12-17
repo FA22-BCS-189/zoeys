@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Directories to allow
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Pages to disallow
+Disallow: /search
+Disallow: /admin
+Disallow: /private/
+Disallow: /api/
+
+# Sitemap location (update with your domain)
+Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://yourdomain.com/sitemap-products.xml
+
+# Crawl delay 
+# Crawl-delay: 1
