@@ -77,16 +77,29 @@ model OrderItem {
 }
 
 model PageContent {
-  id          String   @id @default(uuid())
-  pageKey     String   @unique
-  title       String
-  content     String   @db.Text
-  metaTitle   String?
+  id              String   @id @default(uuid())
+  pageKey         String   @unique
+  title           String
+  content         String   @db.Text
+  metaTitle       String?
   metaDescription String?
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  keywords        String?
+  published       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([pageKey])
   @@index([published])
+}
+
+model SiteSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  label       String
+  category    String   @default("general")
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([key])
 }

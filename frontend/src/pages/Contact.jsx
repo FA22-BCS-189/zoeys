@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, MessageCircle, Crown } from 'lucide-react';
 // Import SEO utilities
 import { setPageMeta, getOrganizationSchema, getFAQSchema, injectSchema, BUSINESS_INFO } from '../utils/seo-utils';
+// Import APIs
+import { settingsAPI } from '../utils/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -11,47 +13,66 @@ const Contact = () => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await settingsAPI.getAll();
+        setSettings(data);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Set SEO meta tags on component mount
   useEffect(() => {
-    setPageMeta({
-      title: 'Contact Us - Zoey\'s Heritage Embroidery',
-      description: 'Get in touch with Zoey\'s Heritage Embroidered Fabrics. WhatsApp: +92 330 0390222. Custom orders, bulk purchases, and nationwide delivery across Pakistan.',
-      keywords: 'contact bahawalpur embroidery, custom embroidery orders, wholesale traditional fabrics, pakistani embroidery contact, whatsapp embroidery queries',
-      url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/contact`,
-      type: 'website'
-    });
+    if (!loading && settings) {
+      setPageMeta({
+        title: `Contact Us - ${settings.business_name || 'Zoey\'s Heritage Embroidery'}`,
+        description: settings.contact_meta_description || 'Get in touch with Zoey\'s Heritage Embroidered Fabrics. Custom orders, bulk purchases, and nationwide delivery across Pakistan.',
+        keywords: settings.contact_meta_keywords || 'contact bahawalpur embroidery, custom embroidery orders, wholesale traditional fabrics, pakistani embroidery contact, whatsapp embroidery queries',
+        url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/contact`,
+        type: 'website'
+      });
 
-    // Inject organization schema (includes contact info)
-    const organizationSchema = getOrganizationSchema();
-    
-    // Inject FAQ schema for common questions
-    const faqSchema = getFAQSchema([
-      {
-        question: "Do you accept custom embroidery orders?",
-        answer: "Yes, we specialize in custom Bahawalpur embroidery orders. You can provide your design preferences or work with our artisans to create unique pieces."
-      },
-      {
-        question: "What is your delivery time for custom orders?",
-        answer: "Custom embroidery orders typically take 2-4 weeks depending on complexity. Ready-made items ship within 3-5 business days across Pakistan."
-      },
-      {
-        question: "Do you offer wholesale prices for bulk purchases?",
-        answer: "Yes, we offer competitive wholesale pricing for bulk orders and retail partnerships. Contact us directly for bulk purchase discounts."
-      },
-      {
-        question: "What payment methods do you accept?",
-        answer: "We accept Cash on Delivery (COD) nationwide. For bulk and custom orders, we also accept bank transfers with order confirmation."
-      },
-      {
-        question: "Do you ship internationally?",
-        answer: "Currently we ship across Pakistan. For international orders, please contact us directly to discuss shipping options and costs."
-      }
-    ]);
+      // Inject organization schema (includes contact info)
+      const organizationSchema = getOrganizationSchema();
+      
+      // Inject FAQ schema for common questions
+      const faqSchema = getFAQSchema([
+        {
+          question: "Do you accept custom embroidery orders?",
+          answer: "Yes, we specialize in custom Bahawalpur embroidery orders. You can provide your design preferences or work with our artisans to create unique pieces."
+        },
+        {
+          question: "What is your delivery time for custom orders?",
+          answer: "Custom embroidery orders typically take 2-4 weeks depending on complexity. Ready-made items ship within 3-5 business days across Pakistan."
+        },
+        {
+          question: "Do you offer wholesale prices for bulk purchases?",
+          answer: "Yes, we offer competitive wholesale pricing for bulk orders and retail partnerships. Contact us directly for bulk purchase discounts."
+        },
+        {
+          question: "What payment methods do you accept?",
+          answer: "We accept Cash on Delivery (COD) nationwide. For bulk and custom orders, we also accept bank transfers with order confirmation."
+        },
+        {
+          question: "Do you ship internationally?",
+          answer: "Currently we ship across Pakistan. For international orders, please contact us directly to discuss shipping options and costs."
+        }
+      ]);
 
-    injectSchema(organizationSchema);
-    injectSchema(faqSchema);
-  }, []);
+      injectSchema(organizationSchema);
+      injectSchema(faqSchema);
+    }
+  }, [loading, settings]);
 
   const handleChange = (e) => {
     setFormData({
@@ -72,19 +93,19 @@ const Contact = () => {
     {
       icon: Phone,
       title: 'Phone / WhatsApp',
-      value: '+92 330 0390222',
-      link: 'https://wa.me/923300390222'
+      value: settings.business_phone || '+92 330 0390222',
+      link: settings.business_phone ? `https://wa.me/${settings.business_phone.replace(/[^0-9]/g, '')}` : 'https://wa.me/923300390222'
     },
     {
       icon: Mail,
       title: 'Email',
-      value: 'zaiinabsanaullah@gmail.com',
-      link: 'mailto:zaiinabsanaullah@gmail.com'
+      value: settings.business_email || 'zaiinabsanaullah@gmail.com',
+      link: `mailto:${settings.business_email || 'zaiinabsanaullah@gmail.com'}`
     },
     {
       icon: MapPin,
       title: 'Location',
-      value: 'Lahore, Punjab, Pakistan',
+      value: settings.business_address || 'Lahore, Punjab, Pakistan',
       link: null
     }
   ];

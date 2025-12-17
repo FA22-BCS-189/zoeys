@@ -21,6 +21,7 @@ const AdminContent = () => {
     content: '',
     metaTitle: '',
     metaDescription: '',
+    keywords: '',
     published: true
   });
 
@@ -84,6 +85,7 @@ const AdminContent = () => {
       content: item.content,
       metaTitle: item.metaTitle || '',
       metaDescription: item.metaDescription || '',
+      keywords: item.keywords || '',
       published: item.published
     });
     setShowModal(true);
@@ -127,7 +129,9 @@ const AdminContent = () => {
           ...formData,
           title: response.data.title,
           content: response.data.content,
-          metaDescription: response.data.metaDescription
+          metaTitle: response.data.metaTitle || response.data.title,
+          metaDescription: response.data.metaDescription,
+          keywords: response.data.keywords || ''
         });
         showNotification('Content generated successfully!');
       }
@@ -145,6 +149,7 @@ const AdminContent = () => {
       pageKey: '',
       title: '',
       content: '',
+      keywords: '',
       metaTitle: '',
       metaDescription: '',
       published: true
@@ -344,6 +349,20 @@ const AdminContent = () => {
                 <p className="text-xs text-charcoal/60 mt-1">
                   {formData.metaDescription.length} characters
                 </p>
+
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">Keywords (SEO)</label>
+                <input
+                  type="text"
+                  value={formData.keywords}
+                  onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                  placeholder="comma, separated, keywords"
+                  className="w-full px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+                <p className="text-xs text-charcoal/60 mt-1">
+                  Separate keywords with commas
+                </p>
+              </div>
               </div>
 
               <div className="flex items-center gap-3">

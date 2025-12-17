@@ -34,6 +34,12 @@ export const contentAPI = {
   getByPageKey: (pageKey) => api.get(`/content/${pageKey}`)
 };
 
+// Settings API
+export const settingsAPI = {
+  getAll: () => api.get('/settings'),
+  getByKey: (key) => api.get(`/settings/${key}`)
+};
+
 // Admin API
 export const adminAPI = {
   authenticate: (password) => {

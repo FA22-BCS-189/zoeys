@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, FolderOpen, LogOut, X, FileText } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, FolderOpen, LogOut, X, FileText, Settings } from 'lucide-react';
 import { adminAuth } from '../utils/adminAuth';
 
 const AdminSidebar = ({ onClose }) => {
@@ -17,6 +17,7 @@ const AdminSidebar = ({ onClose }) => {
     { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
     { path: '/admin/collections', icon: FolderOpen, label: 'Collections' },
     { path: '/admin/content', icon: FileText, label: 'Page Content' },
+    { path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (

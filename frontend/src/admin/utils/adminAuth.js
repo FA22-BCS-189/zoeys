@@ -233,5 +233,47 @@ export const adminAPI = {
     });
     if (!res.ok) throw new Error('Failed to generate content');
     return res.json();
+  },
+
+  // Site Settings Management
+  getSettings: async () => {
+    const url = `${API_BASE_URL}/api/admin/settings`;
+    const res = await fetch(url, {
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch settings');
+    return res.json();
+  },
+
+  saveSetting: async (settingData) => {
+    const url = `${API_BASE_URL}/api/admin/settings`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify(settingData)
+    });
+    if (!res.ok) throw new Error('Failed to save setting');
+    return res.json();
+  },
+
+  updateSetting: async (id, settingData) => {
+    const url = `${API_BASE_URL}/api/admin/settings/${id}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify(settingData)
+    });
+    if (!res.ok) throw new Error('Failed to update setting');
+    return res.json();
+  },
+
+  deleteSetting: async (id) => {
+    const url = `${API_BASE_URL}/api/admin/settings/${id}`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete setting');
+    return res.json();
   }
 };

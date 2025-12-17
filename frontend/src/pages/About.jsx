@@ -1,44 +1,66 @@
 import { motion } from 'framer-motion';
 import { Heart, Award, Users, Sparkles, Crown, Star, Feather } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 // Import SEO utilities
 import { setPageMeta, getOrganizationSchema, getFAQSchema, injectSchema } from '../utils/seo-utils';
+// Import APIs
+import { contentAPI } from '../utils/api';
 
 const About = () => {
+  const [content, setContent] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch page content
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const data = await contentAPI.getByKey('about');
+        setContent(data || {});
+      } catch (error) {
+        console.error('Error fetching content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContent();
+  }, []);
+
   // Set SEO meta tags on component mount
   useEffect(() => {
-    setPageMeta({
-      title: 'Our Story - Heritage & Craftsmanship',
-      description: 'Discover Zoey\'s Heritage Embroidered Fabrics - preserving centuries-old Bahawalpur embroidery techniques including pakka tanka, tarkashi, cut dana, and chicken kaari work.',
-      keywords: 'bahawalpur embroidery heritage, traditional pakistani crafts, artisan support, embroidery techniques, pakka tanka, tarkashi, cut dana, chicken kaari, handcrafted fabrics',
-      url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/about`,
-      type: 'website'
-    });
+    if (!loading) {
+      setPageMeta({
+        title: content.metaTitle || 'Our Story - Heritage & Craftsmanship',
+        description: content.metaDescription || 'Discover Zoey\'s Heritage Embroidered Fabrics - preserving centuries-old Bahawalpur embroidery techniques including pakka tanka, tarkashi, cut dana, and chicken kaari work.',
+        keywords: content.keywords || 'bahawalpur embroidery heritage, traditional pakistani crafts, artisan support, embroidery techniques, pakka tanka, tarkashi, cut dana, chicken kaari, handcrafted fabrics',
+        url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/about`,
+        type: 'website'
+      });
 
-    // Inject organization schema
-    const organizationSchema = getOrganizationSchema();
-    const faqSchema = getFAQSchema([
-      {
-        question: "What is Bahawalpur embroidery?",
-        answer: "Bahawalpur embroidery is a traditional Pakistani craft from the Punjab region, known for distinctive techniques like pakka tanka (bold colorful stitches), tarkashi (delicate threadwork), cut dana (sparkly embellishments), and chicken kaari (intricate patterns)."
-      },
-      {
-        question: "How do you support local artisans?",
-        answer: "We work directly with skilled Bahawalpur artisans, providing fair wages and preserving traditional embroidery techniques passed down through generations while creating sustainable livelihoods."
-      },
-      {
-        question: "What makes your embroidery techniques special?",
-        answer: "Our embroidery preserves centuries-old techniques with meticulous handcrafting. Each piece features authentic pakka tanka, tarkashi, cut dana, or chicken kaari work done by master artisans using traditional methods."
-      },
-      {
-        question: "How long does it take to create one embroidered piece?",
-        answer: "Depending on the complexity and embroidery technique, a single piece can take our artisans from several days to weeks to complete, with meticulous attention to every stitch and detail."
-      }
-    ]);
+      // Inject organization schema
+      const organizationSchema = getOrganizationSchema();
+      const faqSchema = getFAQSchema([
+        {
+          question: "What is Bahawalpur embroidery?",
+          answer: "Bahawalpur embroidery is a traditional Pakistani craft from the Punjab region, known for distinctive techniques like pakka tanka (bold colorful stitches), tarkashi (delicate threadwork), cut dana (sparkly embellishments), and chicken kaari (intricate patterns)."
+        },
+        {
+          question: "How do you support local artisans?",
+          answer: "We work directly with skilled Bahawalpur artisans, providing fair wages and preserving traditional embroidery techniques passed down through generations while creating sustainable livelihoods."
+        },
+        {
+          question: "What makes your embroidery techniques special?",
+          answer: "Our embroidery preserves centuries-old techniques with meticulous handcrafting. Each piece features authentic pakka tanka, tarkashi, cut dana, or chicken kaari work done by master artisans using traditional methods."
+        },
+        {
+          question: "How long does it take to create one embroidered piece?",
+          answer: "Depending on the complexity and embroidery technique, a single piece can take our artisans from several days to weeks to complete, with meticulous attention to every stitch and detail."
+        }
+      ]);
 
-    injectSchema(organizationSchema);
-    injectSchema(faqSchema);
-  }, []);
+      injectSchema(organizationSchema);
+      injectSchema(faqSchema);
+    }
+  }, [loading, content]);
 
   const values = [
     {

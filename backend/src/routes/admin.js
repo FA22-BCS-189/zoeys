@@ -669,7 +669,7 @@ router.get('/content/:pageKey', async (req, res) => {
 // POST /api/admin/content - Create new page content
 router.post('/content', async (req, res) => {
   try {
-    const { pageKey, title, content, metaTitle, metaDescription, published } = req.body;
+    const { pageKey, title, content, metaTitle, metaDescription, keywords, published } = req.body;
 
     // Check if content already exists
     const existing = await prisma.pageContent.findUnique({
@@ -690,6 +690,7 @@ router.post('/content', async (req, res) => {
         content,
         metaTitle,
         metaDescription,
+        keywords,
         published: published !== undefined ? published : true
       }
     });
@@ -712,7 +713,7 @@ router.post('/content', async (req, res) => {
 router.patch('/content/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, metaTitle, metaDescription, published } = req.body;
+    const { title, content, metaTitle, metaDescription, keywords, published } = req.body;
 
     const updatedContent = await prisma.pageContent.update({
       where: { id },
@@ -721,6 +722,7 @@ router.patch('/content/:id', async (req, res) => {
         ...(content && { content }),
         ...(metaTitle !== undefined && { metaTitle }),
         ...(metaDescription !== undefined && { metaDescription }),
+        ...(keywords !== undefined && { keywords }),
         ...(published !== undefined && { published })
       }
     });
@@ -777,7 +779,9 @@ router.post('/content/:pageKey/generate', async (req, res) => {
         pageKey,
         title: generated.title,
         content: generated.content,
+        metaTitle: generated.metaTitle,
         metaDescription: generated.metaDescription,
+        keywords: generated.keywords,
         generatedBy: generated.generatedBy || 'template'
       }
     });
@@ -787,6 +791,102 @@ router.post('/content/:pageKey/generate', async (req, res) => {
       success: false,
       error: 'Failed to generate content',
       details: error.message
+    });
+  }
+});
+
+// GET /api/admin/settings - Get all site settings
+router.get('/settings', async (req, res) => {
+  try {
+    const settings = await prisma.siteSettings.findMany({
+      orderBy: [{ category: 'asc' }, { key: 'asc' }]
+    });
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch settings'
+    });
+  }
+});
+
+// POST /api/admin/settings - Create or update setting
+router.post('/settings', async (req, res) => {
+  try {
+    const { key, value, label, category } = req.body;
+
+    const setting = await prisma.siteSettings.upsert({
+      where: { key },
+      update: { value, label, category: category || 'general' },
+      create: { key, value, label, category: category || 'general' }
+    });
+
+    res.json({
+      success: true,
+      message: 'Setting saved successfully',
+      data: setting
+    });
+  } catch (error) {
+    console.error('Error saving setting:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save setting'
+    });
+  }
+});
+
+// PATCH /api/admin/settings/:id - Update setting
+router.patch('/settings/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { value, label, category } = req.body;
+
+    const setting = await prisma.siteSettings.update({
+      where: { id },
+      data: {
+        ...(value !== undefined && { value }),
+        ...(label !== undefined && { label }),
+        ...(category !== undefined && { category })
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Setting updated successfully',
+      data: setting
+    });
+  } catch (error) {
+    console.error('Error updating setting:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update setting'
+    });
+  }
+});
+
+// DELETE /api/admin/settings/:id - Delete setting
+router.delete('/settings/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.siteSettings.delete({
+      where: { id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Setting deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting setting:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete setting'
     });
   }
 });

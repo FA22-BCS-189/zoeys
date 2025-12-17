@@ -16,25 +16,81 @@
  * @returns {Promise<string>} Generated SEO description
  */
 export async function generateSEODescription(product) {
-  // Check if OpenAI API key is available
-  const openaiApiKey = process.env.OPENAI_API_KEY;
+  // Check if Gemini API key is available
+  const geminiApiKey = process.env.GEMINI_API_KEY;
 
-  if (openaiApiKey) {
+  if (geminiApiKey) {
     try {
-      return await generateWithOpenAI(product, openaiApiKey);
+      return await generateWithGemini(product, geminiApiKey);
     } catch (error) {
-      console.error('OpenAI generation failed, falling back to template:', error);
+      console.error('Gemini generation failed, falling back to template:', error);
       return generateWithTemplate(product);
     }
   } else {
     // Fallback to template-based generation
-    console.log('No OpenAI API key found, using template-based generation');
+    console.log('No Gemini API key found, using template-based generation');
     return generateWithTemplate(product);
   }
 }
 
 /**
- * Generate SEO description using OpenAI API
+ * Generate SEO description using Gemini API
+ */
+async function generateWithGemini(product, apiKey) {
+  const prompt = `Create a compelling, SEO-optimized product description for an e-commerce website selling traditional Pakistani embroidered fabrics.
+
+Product Details:
+- Name: ${product.name}
+- Color: ${product.color}
+- Price: PKR ${product.price}
+- Pieces: ${product.pieces}
+- Collection: ${product.collection?.name || 'Premium'}
+${product.description ? `- Current Description: ${product.description}` : ''}
+
+Requirements:
+- Length: 150-160 characters (ideal for meta descriptions)
+- Include relevant keywords: traditional embroidery, Bahawalpur, handcrafted, Pakistani fabric
+- Highlight the unique selling points
+- Make it engaging and conversion-focused
+- Natural, flowing language
+
+Generate only the description text, no additional commentary.`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 150
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Gemini API error: ${error.error?.message || 'Unknown error'}`);
+  }
+
+  const data = await response.json();
+  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+  if (!generatedText) {
+    throw new Error('No description generated from Gemini');
+  }
+
+  return generatedText;
+}
+
+/**
+ * Generate SEO description using OpenAI API (legacy support)
  */
 async function generateWithOpenAI(product, apiKey) {
   const prompt = `Create a compelling, SEO-optimized product description for an e-commerce website selling traditional Pakistani embroidered fabrics.
@@ -124,11 +180,6 @@ function generateWithTemplate(product) {
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const selectedTemplate = templates[hash % templates.length];
 
-  // Ensure it's within SEO meta description length (150-160 chars is ideal)
-  if (selectedTemplate.length > 160) {
-    return selectedTemplate.substring(0, 157) + '...';
-  }
-
   return selectedTemplate;
 }
 
@@ -192,7 +243,104 @@ export async function generatePageContent(pageKey, context = {}) {
 }
 
 /**
- * Generate page content using OpenAI
+ * Generate page content using Gemini AI
+ */
+async function generatePageContentWithGemini(pageKey, context, apiKey) {
+  const businessName = process.env.BUSINESS_NAME || "Zoey's";
+  
+  const prompts = {
+    'about-story': `Write a compelling "Our Story" section for ${businessName} Heritage Embroidery, a business preserving traditional Bahawalpur embroidery techniques. Include how the business started, the heritage being preserved, the artisans and their skills, and the mission. Also generate:
+- A suitable meta title (50-60 characters)
+- A meta description (150-160 characters)
+- 5-7 relevant keywords
+
+Format the response as JSON with keys: title, content, metaTitle, metaDescription, keywords`,
+    
+    'about-mission': `Write a mission statement for ${businessName} Heritage Embroidery focusing on preserving traditional Bahawalpur embroidery, supporting local artisans, combining heritage with modern design, and quality craftsmanship. Also generate:
+- A suitable meta title
+- A meta description  
+- 5-7 relevant keywords
+
+Format as JSON with keys: title, content, metaTitle, metaDescription, keywords`,
+    
+    'home-hero': `Write a compelling hero section for ${businessName} Heritage Embroidery e-commerce site.
+Include:
+- A bold headline (5-8 words)
+- A subheadline describing the value proposition (15-25 words)
+- Meta title
+- Meta description
+- Keywords
+
+Focus on: Traditional craftsmanship, handmade quality, heritage preservation, Pakistani embroidery.
+Format as JSON with keys: title, content, metaTitle, metaDescription, keywords`,
+    
+    'collection-intro': `Write an introduction for the ${context.collectionName || 'embroidery'} collection highlighting the unique embroidery technique, traditional heritage, quality and craftsmanship. Include meta title, description, and keywords. Format as JSON.`,
+    
+    'contact-intro': `Write a welcoming contact page introduction for ${businessName} Heritage Embroidery. Encourage customers to reach out for custom orders, wholesale inquiries, and any questions. Include meta fields. Format as JSON.`,
+    
+    'footer-about': `Write a brief "About Us" text for the footer of ${businessName} Heritage Embroidery website (50-80 words). Include meta fields. Format as JSON.`
+  };
+
+  const prompt = prompts[pageKey] || `Write engaging content for the ${pageKey} section of ${businessName} Heritage Embroidery website selling traditional Bahawalpur embroidery. Include meta title, meta description, and keywords. Format as JSON with keys: title, content, metaTitle, metaDescription, keywords`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Gemini API error: ${error.error?.message || 'Unknown error'}`);
+  }
+
+  const data = await response.json();
+  let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+  if (!generatedText) {
+    throw new Error('No content generated from Gemini');
+  }
+
+  // Extract JSON from markdown code blocks if present
+  generatedText = generatedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+  try {
+    const parsed = JSON.parse(generatedText);
+    return {
+      title: parsed.title || pageKey,
+      content: parsed.content || generatedText,
+      metaTitle: parsed.metaTitle || parsed.title,
+      metaDescription: parsed.metaDescription || (parsed.content?.substring(0, 160)),
+      keywords: Array.isArray(parsed.keywords) ? parsed.keywords.join(', ') : parsed.keywords,
+      generatedBy: 'gemini'
+    };
+  } catch (e) {
+    // If not JSON, use the text as content
+    return {
+      title: pageKey.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      content: generatedText,
+      metaTitle: pageKey,
+      metaDescription: generatedText.substring(0, 160),
+      keywords: 'bahawalpur embroidery, traditional pakistani embroidery, handcrafted',
+      generatedBy: 'gemini'
+    };
+  }
+}
+
+/**
+ * Generate page content using OpenAI (legacy support)
  */
 async function generatePageContentWithAI(pageKey, context, apiKey) {
   const prompts = {
