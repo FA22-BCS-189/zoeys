@@ -18,6 +18,7 @@ const AdminProducts = () => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [generatingSEO, setGeneratingSEO] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -26,6 +27,7 @@ const AdminProducts = () => {
     pieces: '3 pc',
     quantity: 0,
     description: '',
+    seoDescription: '',
     collectionId: '',
     images: [],
     stockStatus: 'out_of_stock'
@@ -116,6 +118,7 @@ const AdminProducts = () => {
       price: product.price.toString(),
       pieces: product.pieces,
       quantity: product.quantity,
+      seoDescription: product.seoDescription || '',
       description: product.description || '',
       collectionId: product.collectionId,
       images: product.images || [],
@@ -145,6 +148,62 @@ const AdminProducts = () => {
     }
   };
 
+  const handleGenerateSEO = async () => {
+    try {
+      setGeneratingSEO(true);
+      
+      // If editing existing product, use API
+      if (editingProduct) {
+        const response = await adminAPI.generateSEODescription(editingProduct.id);
+        
+        if (response.success) {
+          setFormData({
+            ...formData,
+            seoDescription: response.data.seoDescription
+          });
+          showNotification('SEO description generated successfully!');
+          
+          if (response.validation?.warnings?.length > 0) {
+            console.log('SEO Validation:', response.validation);
+          }
+        }
+      } else {
+        // For new products, generate client-side using template
+        const collection = collections.find(c => c.id === formData.collectionId);
+        const seoDesc = generateClientSideSEO(formData, collection);
+        setFormData({
+          ...formData,
+          seoDescription: seoDesc
+        });
+        showNotification('SEO description generated successfully!');
+      }
+    } catch (error) {
+      console.error('Error generating SEO description:', error);
+      showNotification('Failed to generate SEO description', 'error');
+    } finally {
+      setGeneratingSEO(false);
+    }
+  };
+
+  const generateClientSideSEO = (product, collection) => {
+    const collectionName = collection?.name || 'Premium Collection';
+    const color = product.color || 'Elegant';
+    const name = product.name || 'Product';
+    const pieces = product.pieces || '3 pc';
+    const price = product.price || '0';
+
+    const templates = [
+      `Exquisite ${color} ${name} from our ${collectionName}. ${pieces} of handcrafted Bahawalpur embroidery at PKR ${price}. Traditional Pakistani artistry meets modern elegance.`,
+      `Discover the beauty of ${color} ${name} - ${pieces} of authentic Bahawalpur embroidery. Part of our ${collectionName}, priced at PKR ${price}. Premium handcrafted Pakistani fabric.`,
+      `Premium ${color} ${name} featuring traditional Bahawalpur embroidery. ${collectionName} piece includes ${pieces} at PKR ${price}. Handcrafted with care for authentic Pakistani heritage.`,
+    ];
+
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const selected = templates[hash % templates.length];
+
+    return selected.length > 160 ? selected.substring(0, 157) + '...' : selected;
+  };
+
   const resetForm = () => {
     setEditingProduct(null);
     setFormData({
@@ -152,6 +211,7 @@ const AdminProducts = () => {
       color: '',
       price: '',
       pieces: '3 pc',
+      seoDescription: '',
       quantity: 0,
       description: '',
       collectionId: '',
@@ -458,6 +518,52 @@ const AdminProducts = () => {
     placeholder="Enter product description..."
   />
 </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-charcoal">SEO Meta Description</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSEO}
+                    disabled={generatingSEO || !formData.name || !formData.color || !formData.collectionId}
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={!formData.name || !formData.color || !formData.collectionId ? 'Fill in name, color, and collection first' : ''}
+                  >
+                    {generatingSEO ? (
+                      <>
+                        <span className="animate-spin">⚙️</span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <span>✨</span>
+                        Generate SEO Description (AI)
+                      </>
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={formData.seoDescription}
+                  onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
+                  placeholder="Enter SEO meta description (120-160 characters recommended)"
+                  rows="3"
+                  className="w-full px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-charcoal/60">
+                    Used for search engine results and social media previews
+                  </p>
+                  <p className={`text-xs font-medium ${
+                    formData.seoDescription.length >= 120 && formData.seoDescription.length <= 160
+                      ? 'text-emerald-600'
+                      : formData.seoDescription.length > 160
+                      ? 'text-rose-600'
+                      : 'text-amber-600'
+                  }`}>
+                    {formData.seoDescription.length} chars
+                  </p>
+                </div>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-2">Images URLs (comma separated)</label>

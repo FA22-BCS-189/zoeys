@@ -28,6 +28,12 @@ export const ordersAPI = {
   getByOrderNumber: (orderNumber) => api.get(`/orders/${orderNumber}`)
 };
 
+// Content API
+export const contentAPI = {
+  getAll: () => api.get('/content'),
+  getByPageKey: (pageKey) => api.get(`/content/${pageKey}`)
+};
+
 // Admin API
 export const adminAPI = {
   authenticate: (password) => {

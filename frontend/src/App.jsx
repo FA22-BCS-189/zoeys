@@ -18,6 +18,7 @@ import AdminDashboard from './admin/pages/AdminDashboard';
 import AdminProducts from './admin/pages/AdminProducts';
 import AdminOrders from './admin/pages/AdminOrders';
 import AdminCollections from './admin/pages/AdminCollections';
+import AdminContent from './admin/pages/AdminContent';
 
 // ScrollToTop component
 const ScrollToTop = () => {
@@ -111,6 +112,7 @@ function App() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="collections" element={<AdminCollections />} />
+            <Route path="content" element={<AdminContent />} />
           </Route>
 
           {/* Product Routes - WILDCARD ROUTES LAST */}

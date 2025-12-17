@@ -160,5 +160,78 @@ export const adminAPI = {
     });
     if (!res.ok) throw new Error('Failed to delete collection');
     return res.json();
+  },
+
+  // AI SEO Description
+  generateSEODescription: async (productId) => {
+    const url = `${API_BASE_URL}/api/admin/products/${productId}/generate-seo`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to generate SEO description');
+    return res.json();
+  },
+
+  // Page Content Management
+  getContent: async () => {
+    const url = `${API_BASE_URL}/api/admin/content`;
+    const res = await fetch(url, {
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch content');
+    return res.json();
+  },
+
+  getContentByKey: async (pageKey) => {
+    const url = `${API_BASE_URL}/api/admin/content/${pageKey}`;
+    const res = await fetch(url, {
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch content');
+    return res.json();
+  },
+
+  createContent: async (contentData) => {
+    const url = `${API_BASE_URL}/api/admin/content`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify(contentData)
+    });
+    if (!res.ok) throw new Error('Failed to create content');
+    return res.json();
+  },
+
+  updateContent: async (id, contentData) => {
+    const url = `${API_BASE_URL}/api/admin/content/${id}`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify(contentData)
+    });
+    if (!res.ok) throw new Error('Failed to update content');
+    return res.json();
+  },
+
+  deleteContent: async (id) => {
+    const url = `${API_BASE_URL}/api/admin/content/${id}`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: adminAuth.getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete content');
+    return res.json();
+  },
+
+  generateContent: async (pageKey, context = {}) => {
+    const url = `${API_BASE_URL}/api/admin/content/${pageKey}/generate`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify({ context })
+    });
+    if (!res.ok) throw new Error('Failed to generate content');
+    return res.json();
   }
 };

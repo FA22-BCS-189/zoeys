@@ -20,21 +20,22 @@ model Collection {
 }
 
 model Product {
-  id           String      @id @default(uuid())
-  name         String
-  color        String
-  price        Float
-  pieces       String      @default("3 pc")
-  quantity     Int         @default(1)
-  description  String?
-  images       String[]    @default([])
-  slug         String      @unique
-  collectionId String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  stockStatus  String      @default("in_stock")
-  orderItems   OrderItem[]
-  collection   Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  id             String      @id @default(uuid())
+  name           String
+  color          String
+  price          Float
+  pieces         String      @default("3 pc")
+  quantity       Int         @default(1)
+  description    String?
+  seoDescription String?
+  images         String[]    @default([])
+  slug           String      @unique
+  collectionId   String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  stockStatus    String      @default("in_stock")
+  orderItems     OrderItem[]
+  collection     Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@index([collectionId])
   @@index([quantity])
@@ -73,4 +74,19 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model PageContent {
+  id          String   @id @default(uuid())
+  pageKey     String   @unique
+  title       String
+  content     String   @db.Text
+  metaTitle   String?
+  metaDescription String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([pageKey])
+  @@index([published])
 }

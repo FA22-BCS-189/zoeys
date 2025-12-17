@@ -42,7 +42,10 @@ const ProductDetail = () => {
     if (!productData) return;
 
     const productTitle = `${productData.name} - ${productData.color} | Zoey's Heritage Embroidery`;
-    const productDescription = productData.description || 
+    
+    // Use seoDescription if available, otherwise generate a default one
+    const productDescription = productData.seoDescription ||
+      productData.description || 
       `Handcrafted ${productData.color} ${productData.name} with traditional Bahawalpur ${productData.collection.name} embroidery. ${productData.pieces}.`;
     
     const productUrl = `${BUSINESS_INFO.url}/product/${slug}`;
@@ -281,6 +284,18 @@ const ProductDetail = () => {
                     <span className="text-emerald-700 font-semibold text-sm">{product.pieces}</span>
                   </div>
                 </div>
+
+                {/* SEO Description - Optimized for search engines */}
+                {product.seoDescription && (
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200/50 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg">✨</span>
+                      <p className="text-charcoal/90 text-sm leading-relaxed font-medium">
+                        {product.seoDescription}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="prose max-w-none">
                   <p className="text-charcoal/80 leading-relaxed font-medium text-sm">

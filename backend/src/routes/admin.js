@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { body, validationResult } from 'express-validator';
+import { generateSEODescription, validateSEODescription, generatePageContent } from '../utils/aiService.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -208,7 +209,7 @@ router.post('/products',
         });
       }
 
-      const { name, description, color, price, pieces, collectionId, images, stockStatus } = req.body;
+      const { name, description, seoDescription, color, price, pieces, collectionId, images, stockStatus } = req.body;
 
       // Generate slug
       const slug = `${name}-${color}`.toLowerCase()
@@ -232,6 +233,7 @@ router.post('/products',
           name,
           slug,
           description,
+          seoDescription,
           color,
           price: parseFloat(price),
           pieces: pieces || '3 pc',
@@ -560,6 +562,231 @@ router.delete('/collections/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete collection'
+    });
+  }
+});
+
+// POST /api/admin/products/:id/generate-seo - Generate SEO description using AI
+router.post('/products/:id/generate-seo', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch product with collection details
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        collection: true
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
+
+    // Generate SEO description
+    const seoDescription = await generateSEODescription(product);
+
+    // Validate the generated description
+    const validation = validateSEODescription(seoDescription);
+
+    // Update product with the generated SEO description
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: { seoDescription },
+      include: {
+        collection: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'SEO description generated successfully',
+      data: updatedProduct,
+      validation
+    });
+  } catch (error) {
+    console.error('Error generating SEO description:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate SEO description',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/admin/content - Get all page content
+router.get('/content', async (req, res) => {
+  try {
+    const content = await prisma.pageContent.findMany({
+      orderBy: { pageKey: 'asc' }
+    });
+
+    res.json({
+      success: true,
+      data: content
+    });
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch content'
+    });
+  }
+});
+
+// GET /api/admin/content/:pageKey - Get specific page content
+router.get('/content/:pageKey', async (req, res) => {
+  try {
+    const { pageKey } = req.params;
+    
+    const content = await prisma.pageContent.findUnique({
+      where: { pageKey }
+    });
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: 'Content not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: content
+    });
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch content'
+    });
+  }
+});
+
+// POST /api/admin/content - Create new page content
+router.post('/content', async (req, res) => {
+  try {
+    const { pageKey, title, content, metaTitle, metaDescription, published } = req.body;
+
+    // Check if content already exists
+    const existing = await prisma.pageContent.findUnique({
+      where: { pageKey }
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        error: 'Content with this page key already exists'
+      });
+    }
+
+    const newContent = await prisma.pageContent.create({
+      data: {
+        pageKey,
+        title,
+        content,
+        metaTitle,
+        metaDescription,
+        published: published !== undefined ? published : true
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Content created successfully',
+      data: newContent
+    });
+  } catch (error) {
+    console.error('Error creating content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create content'
+    });
+  }
+});
+
+// PATCH /api/admin/content/:id - Update page content
+router.patch('/content/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content, metaTitle, metaDescription, published } = req.body;
+
+    const updatedContent = await prisma.pageContent.update({
+      where: { id },
+      data: {
+        ...(title && { title }),
+        ...(content && { content }),
+        ...(metaTitle !== undefined && { metaTitle }),
+        ...(metaDescription !== undefined && { metaDescription }),
+        ...(published !== undefined && { published })
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Content updated successfully',
+      data: updatedContent
+    });
+  } catch (error) {
+    console.error('Error updating content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update content'
+    });
+  }
+});
+
+// DELETE /api/admin/content/:id - Delete page content
+router.delete('/content/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.pageContent.delete({
+      where: { id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Content deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete content'
+    });
+  }
+});
+
+// POST /api/admin/content/:pageKey/generate - Generate content using AI
+router.post('/content/:pageKey/generate', async (req, res) => {
+  try {
+    const { pageKey } = req.params;
+    const { context } = req.body;
+
+    // Generate content
+    const generated = await generatePageContent(pageKey, context || {});
+
+    res.json({
+      success: true,
+      message: 'Content generated successfully',
+      data: {
+        pageKey,
+        title: generated.title,
+        content: generated.content,
+        metaDescription: generated.metaDescription,
+        generatedBy: generated.generatedBy || 'template'
+      }
+    });
+  } catch (error) {
+    console.error('Error generating content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate content',
+      details: error.message
     });
   }
 });

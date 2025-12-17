@@ -9,6 +9,7 @@ import productRoutes from './routes/products.js';
 import collectionRoutes from './routes/collections.js';
 import orderRoutes from './routes/orders.js';
 import adminRoutes from './routes/admin.js';
+import contentRoutes from './routes/content.js';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.use('/api/collections', collectionRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/content', contentRoutes);
 
 // 404 handler
 app.use((req, res) => {
