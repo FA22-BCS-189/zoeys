@@ -41,13 +41,16 @@ const ProductDetail = () => {
   const setProductSEO = (productData) => {
     if (!productData) return;
 
-    const productTitle = `${productData.name} - ${productData.color} | Zoey's Heritage Embroidery`;
-    
-    // Use seoDescription if available, otherwise generate a default one
-    const productDescription = productData.seoDescription ||
+    // Use meta fields from database if available
+    const productTitle = productData.metaTitle || `${productData.name} - ${productData.color} | Zoey's Heritage Embroidery`;
+    const productDescription = productData.metaDescription || 
+      productData.seoDescription ||
       productData.description || 
       `Handcrafted ${productData.color} ${productData.name} with traditional Bahawalpur ${productData.collection.name} embroidery. ${productData.pieces}.`;
     
+    const productKeywords = productData.keywords || 
+      `${productData.name}, ${productData.color}, ${productData.collection.name}, bahawalpur embroidery, traditional pakistani embroidery, handcrafted fabric`;
+
     const productUrl = `${BUSINESS_INFO.url}/product/${slug}`;
     const productImage = productData.images && productData.images.length > 0 
       ? productData.images[0].startsWith('http') 
@@ -57,9 +60,9 @@ const ProductDetail = () => {
 
     // Set meta tags
     setPageMeta({
-      title: `${productData.name} - ${productData.color}`,
+      title: productTitle,
       description: productDescription,
-      keywords: `${productData.name}, ${productData.color}, ${productData.collection.name}, bahawalpur embroidery, traditional pakistani embroidery, handcrafted fabric`,
+      keywords: productKeywords,
       image: productImage,
       url: productUrl,
       type: 'product',
@@ -69,12 +72,17 @@ const ProductDetail = () => {
       }
     });
 
-    // Generate and inject schemas
-    const productSchema = getProductSchema({
-      ...productData,
-      slug: slug,
-      images: productData.images || [productImage]
-    });
+    // Use JSON-LD schema from database if available, otherwise generate
+    let productSchema;
+    if (productData.jsonLdSchema) {
+      productSchema = productData.jsonLdSchema;
+    } else {
+      productSchema = getProductSchema({
+        ...productData,
+        slug: slug,
+        images: productData.images || [productImage]
+      });
+    }
 
     const breadcrumbSchema = getBreadcrumbSchema([
       { name: 'Home', url: '/' },
@@ -83,7 +91,7 @@ const ProductDetail = () => {
       { name: `${productData.name} - ${productData.color}`, url: `/product/${slug}` }
     ]);
 
-    // Inject schemas
+    // Inject schemas into page head
     injectSchema(productSchema);
     injectSchema(breadcrumbSchema);
   };
@@ -128,6 +136,15 @@ const ProductDetail = () => {
         )
       : [getPlaceholderImage(product.color)];
 
+  // Get image alt texts from database or use defaults
+  const imageAlts = product.imageAlts && product.imageAlts.length > 0
+    ? product.imageAlts
+    : images.map((_, index) => 
+        index === 0 
+          ? `${product.name} in ${product.color} - Traditional Bahawalpur ${product.collection.name} embroidery`
+          : `${product.name} in ${product.color} - View ${index + 1}`
+      );
+
   const isOutOfStock = product.quantity <= 0;
   const maxQuantity = product.quantity || 1;
 
@@ -166,7 +183,7 @@ const ProductDetail = () => {
             </li>
             <li>
               <Link
-                to={`/shop?collection=${product.collection.slug}`}
+                to={`/collection/${product.collection.slug}`}
                 className="hover:text-emerald-600 transition-colors"
               >
                 {product.collection.name}
@@ -207,7 +224,7 @@ const ProductDetail = () => {
                 >
                   <img
                     src={images[selectedImage]}
-                    alt={`${product.name} in ${product.color} - Traditional Bahawalpur ${product.collection.name} embroidery`}
+                    alt={imageAlts[selectedImage] || `${product.name} in ${product.color}`}
                     className="w-full h-full object-cover"
                   />
                   
@@ -235,7 +252,7 @@ const ProductDetail = () => {
                       >
                         <img
                           src={image}
-                          alt={`${product.name} in ${product.color} - View ${index + 1}`}
+                          alt={imageAlts[index] || `${product.name} view ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </motion.button>
@@ -285,24 +302,65 @@ const ProductDetail = () => {
                   </div>
                 </div>
 
-                {/* SEO Description - Optimized for search engines */}
-                {product.seoDescription && (
-                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200/50 rounded-lg p-4">
-                    <div className="flex items-start gap-2">
-                      <span className="text-lg">✨</span>
-                      <p className="text-charcoal/90 text-sm leading-relaxed font-medium">
-                        {product.seoDescription}
-                      </p>
-                    </div>
+                {/* Product Description */}
+                {product.description && (
+                  <div className="prose max-w-none">
+                    <p className="text-charcoal/80 leading-relaxed font-medium text-sm">
+                      {product.description}
+                    </p>
                   </div>
                 )}
 
-                <div className="prose max-w-none">
-                  <p className="text-charcoal/80 leading-relaxed font-medium text-sm">
-                    {product.description ||
-                      `Exquisite ${product.color.toLowerCase()} ${product.name.toLowerCase()} adorned with traditional Bahawalpur embroidery. Handcrafted with meticulous care and attention to detail by our master artisans.`}
-                  </p>
-                </div>
+                {/* Structured SEO Content - AI Generated Headings with proper semantic HTML */}
+                {product.structuredContent && (
+                  <div className="bg-amber-25 border border-amber-200/50 rounded-lg p-5 space-y-4">
+                    {product.structuredContent.h1 && (
+                      <h1 className="text-xl font-display font-bold text-charcoal border-b border-emerald-200 pb-2">
+                        {product.structuredContent.h1}
+                      </h1>
+                    )}
+                    
+                    {/* New sections structure */}
+                    {product.structuredContent.sections && product.structuredContent.sections.length > 0 && (
+                      <div className="space-y-4">
+                        {product.structuredContent.sections.map((section, index) => (
+                          <div key={index} className="space-y-2">
+                            <h2 className="text-base font-semibold text-emerald-700 flex items-center gap-2">
+                              <span className="w-1 h-4 bg-emerald-500 rounded"></span>
+                              {section.heading}
+                            </h2>
+                            {section.points && section.points.length > 0 && (
+                              <ul className="ml-6 space-y-1.5">
+                                {section.points.map((point, pointIndex) => (
+                                  <li key={pointIndex} className="text-sm text-charcoal/80">
+                                    <h3 className="inline font-medium">• {point}</h3>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Fallback for old h2/h3 structure */}
+                    {!product.structuredContent.sections && product.structuredContent.h2 && product.structuredContent.h2.length > 0 && (
+                      <div className="space-y-4">
+                        {product.structuredContent.h2.map((heading, index) => (
+                          <div key={index} className="space-y-2">
+                            <h2 className="text-base font-semibold text-emerald-700 flex items-center gap-2">
+                              <span className="w-1 h-4 bg-emerald-500 rounded"></span>
+                              {heading}
+                            </h2>
+                            {product.structuredContent.h3 && product.structuredContent.h3[index] && (
+                              <p className="text-sm text-charcoal/80 ml-6">• {product.structuredContent.h3[index]}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Quantity Selector */}
                 <div className="bg-emerald-50 border border-emerald-200/50 rounded-lg p-3">

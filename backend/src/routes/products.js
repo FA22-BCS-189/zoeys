@@ -1,5 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
+import { generateProductSEO, generateProductSchema } from '../utils/aiService.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -137,6 +138,65 @@ router.get('/collection/:collectionSlug', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch products'
+    });
+  }
+});
+
+// POST /api/products/generate-seo - Generate SEO content for a product using AI
+router.post('/generate-seo', async (req, res) => {
+  try {
+    const { productId, productData } = req.body;
+
+    let product = productData;
+    
+    // If productId provided, fetch product from database
+    if (productId && !productData) {
+      product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: { collection: true }
+      });
+      
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          error: 'Product not found'
+        });
+      }
+    }
+
+    // Prepare data for AI generation
+    const productInfo = {
+      name: product.name,
+      color: product.color,
+      price: product.price,
+      pieces: product.pieces,
+      description: product.description,
+      collectionName: product.collection?.name || productData?.collectionName
+    };
+
+    // Generate SEO content
+    const seoContent = await generateProductSEO(productInfo);
+
+    // Generate JSON-LD schema
+    const jsonLdSchema = generateProductSchema({
+      ...product,
+      collectionName: product.collection?.name || productData?.collectionName,
+      metaDescription: seoContent.metaDescription
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ...seoContent,
+        jsonLdSchema
+      }
+    });
+  } catch (error) {
+    console.error('Error generating product SEO:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate SEO content',
+      details: error.message
     });
   }
 });

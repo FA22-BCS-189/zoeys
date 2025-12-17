@@ -162,7 +162,30 @@ export const adminAPI = {
     return res.json();
   },
 
-  // AI SEO Description
+  // AI SEO Content Generation
+  generateProductSEO: async (productId) => {
+    const url = `${API_BASE_URL}/api/products/generate-seo`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify({ productId })
+    });
+    if (!res.ok) throw new Error('Failed to generate product SEO');
+    return res.json();
+  },
+
+  generateCollectionSEO: async (collectionId) => {
+    const url = `${API_BASE_URL}/api/collections/generate-seo`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify({ collectionId })
+    });
+    if (!res.ok) throw new Error('Failed to generate collection SEO');
+    return res.json();
+  },
+
+  // Legacy - deprecated
   generateSEODescription: async (productId) => {
     const url = `${API_BASE_URL}/api/admin/products/${productId}/generate-seo`;
     const res = await fetch(url, {

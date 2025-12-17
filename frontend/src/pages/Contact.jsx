@@ -4,7 +4,7 @@ import { Mail, Phone, MapPin, Send, MessageCircle, Crown } from 'lucide-react';
 // Import SEO utilities
 import { setPageMeta, getOrganizationSchema, getFAQSchema, injectSchema, BUSINESS_INFO } from '../utils/seo-utils';
 // Import APIs
-import { settingsAPI } from '../utils/api';
+import { settingsAPI, contentAPI } from '../utils/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -14,65 +14,74 @@ const Contact = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [settings, setSettings] = useState({});
+  const [pageContent, setPageContent] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Fetch settings on mount
+  // Fetch settings and content on mount
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
-        const data = await settingsAPI.getAll();
-        setSettings(data);
+        const [settingsData, contentResponse] = await Promise.all([
+          settingsAPI.getAll(),
+          contentAPI.getByKey('contact').catch(() => ({ success: false, data: {} }))
+        ]);
+        // contentResponse is { success, data }
+        const contentData = contentResponse.data || {};
+        setSettings(settingsData);
+        setPageContent(contentData);
+        console.log('Contact page content loaded:', contentData);
       } catch (error) {
-        console.error('Error fetching settings:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSettings();
+    fetchData();
   }, []);
 
-  // Set SEO meta tags on component mount
+  // Set SEO meta tags when content loads
   useEffect(() => {
-    if (!loading && settings) {
-      setPageMeta({
-        title: `Contact Us - ${settings.business_name || 'Zoey\'s Heritage Embroidery'}`,
-        description: settings.contact_meta_description || 'Get in touch with Zoey\'s Heritage Embroidered Fabrics. Custom orders, bulk purchases, and nationwide delivery across Pakistan.',
-        keywords: settings.contact_meta_keywords || 'contact bahawalpur embroidery, custom embroidery orders, wholesale traditional fabrics, pakistani embroidery contact, whatsapp embroidery queries',
-        url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/contact`,
-        type: 'website'
-      });
+    // Always set meta tags, use database content if available
+    setPageMeta({
+      title: pageContent.metaTitle || `Contact Us - ${settings.business_name || 'Zoey\'s Heritage Embroidery'}`,
+      description: pageContent.metaDescription || 'Get in touch with Zoey\'s Heritage Embroidered Fabrics. Custom orders, bulk purchases, and nationwide delivery across Pakistan.',
+      keywords: pageContent.keywords || 'contact bahawalpur embroidery, custom embroidery orders, wholesale traditional fabrics, pakistani embroidery contact, whatsapp embroidery queries',
+      url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/contact`,
+      type: 'website'
+    });
 
-      // Inject organization schema (includes contact info)
-      const organizationSchema = getOrganizationSchema();
-      
-      // Inject FAQ schema for common questions
-      const faqSchema = getFAQSchema([
-        {
-          question: "Do you accept custom embroidery orders?",
-          answer: "Yes, we specialize in custom Bahawalpur embroidery orders. You can provide your design preferences or work with our artisans to create unique pieces."
-        },
-        {
-          question: "What is your delivery time for custom orders?",
-          answer: "Custom embroidery orders typically take 2-4 weeks depending on complexity. Ready-made items ship within 3-5 business days across Pakistan."
-        },
-        {
-          question: "Do you offer wholesale prices for bulk purchases?",
-          answer: "Yes, we offer competitive wholesale pricing for bulk orders and retail partnerships. Contact us directly for bulk purchase discounts."
-        },
-        {
-          question: "What payment methods do you accept?",
-          answer: "We accept Cash on Delivery (COD) nationwide. For bulk and custom orders, we also accept bank transfers with order confirmation."
-        },
-        {
-          question: "Do you ship internationally?",
-          answer: "Currently we ship across Pakistan. For international orders, please contact us directly to discuss shipping options and costs."
-        }
-      ]);
+    // Inject organization schema (includes contact info)
+    const organizationSchema = getOrganizationSchema();
+    
+    // Use FAQs from database or fallback
+    const faqData = pageContent.content?.faqs && pageContent.content.faqs.length > 0 ? pageContent.content.faqs : [
+      {
+        question: "Do you accept custom embroidery orders?",
+        answer: "Yes, we specialize in custom Bahawalpur embroidery orders. You can provide your design preferences or work with our artisans to create unique pieces."
+      },
+      {
+        question: "What is your delivery time for custom orders?",
+        answer: "Custom embroidery orders typically take 2-4 weeks depending on complexity. Ready-made items ship within 3-5 business days across Pakistan."
+      },
+      {
+        question: "Do you offer wholesale prices for bulk purchases?",
+        answer: "Yes, we offer competitive wholesale pricing for bulk orders and retail partnerships. Contact us directly for bulk purchase discounts."
+      },
+      {
+        question: "What payment methods do you accept?",
+        answer: "We accept Cash on Delivery (COD) nationwide. For bulk and custom orders, we also accept bank transfers with order confirmation."
+      },
+      {
+        question: "Do you ship internationally?",
+        answer: "Currently we ship across Pakistan. For international orders, please contact us directly to discuss shipping options and costs."
+      }
+    ];
+    
+    const faqSchema = getFAQSchema(faqData);
 
-      injectSchema(organizationSchema);
-      injectSchema(faqSchema);
-    }
-  }, [loading, settings]);
+    injectSchema(organizationSchema);
+    injectSchema(faqSchema);
+  }, [pageContent, settings]);
 
   const handleChange = (e) => {
     setFormData({
@@ -127,7 +136,7 @@ const Contact = () => {
             </h1>
             <div className="divider max-w-xs mx-auto border-emerald-400/30" aria-hidden="true" />
             <p className="text-sm md:text-base text-softwhite/80 max-w-2xl mx-auto">
-              Have questions about our products or custom orders? We'd love to hear from you!
+              {pageContent.content?.introText || "Have questions about our products or custom orders? We'd love to hear from you!"}
             </p>
           </motion.div>
         </div>

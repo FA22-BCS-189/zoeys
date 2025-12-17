@@ -20,8 +20,7 @@ const AdminSettings = () => {
     { key: 'facebook_url', label: 'Facebook URL', category: 'social', value: '' },
     { key: 'instagram_url', label: 'Instagram URL', category: 'social', value: '' },
     { key: 'twitter_url', label: 'Twitter URL', category: 'social', value: '' },
-    { key: 'site_tagline', label: 'Site Tagline', category: 'general', value: 'Heritage Crafted by Hand' },
-    { key: 'footer_about', label: 'Footer About Text', category: 'general', value: 'Preserving traditional Bahawalpur embroidery through skilled artisanship.' }
+    { key: 'site_tagline', label: 'Site Tagline', category: 'general', value: 'Heritage Crafted by Hand' }
   ];
 
   useEffect(() => {
@@ -214,7 +213,7 @@ const AdminSettings = () => {
 
             <div className="space-y-4">
               {categorySettings.map((setting) => {
-                const canGenerateAI = ['footer_about', 'site_tagline'].includes(setting.key);
+                const canGenerateAI = false; // Removed AI generation from settings
                 
                 return (
                   <div key={setting.key} className="flex flex-col md:flex-row md:items-center gap-3">
@@ -271,6 +270,43 @@ const AdminSettings = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Google Analytics Status */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-6 bg-emerald-50 border-2 border-emerald-300 rounded-xl shadow-soft p-6"
+      >
+        <h2 className="text-xl font-display font-bold text-charcoal mb-4 flex items-center gap-2">
+          <SettingsIcon size={20} className="text-emerald-600" />
+          Google Analytics
+        </h2>
+        
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-emerald-700 font-semibold text-lg">Analytics Enabled</span>
+          </div>
+          <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg font-mono text-sm">
+            G-9KVEF19CE9
+          </div>
+        </div>
+        
+        <div className="bg-white/60 rounded-lg p-4 border border-emerald-200">
+          <label className="block text-sm font-medium text-charcoal mb-2">
+            Measurement ID (Read-Only)
+          </label>
+          <input
+            type="text"
+            value="G-9KVEF19CE9"
+            readOnly
+            className="w-full px-4 py-2 border-2 border-emerald-300 bg-gray-50 rounded-lg text-sm font-mono cursor-not-allowed"
+          />
+          <p className="text-xs text-charcoal/70 mt-2">
+            This site is actively tracking with Google Analytics 4. Data is being collected for all pages.
+          </p>
+        </div>
+      </motion.div>
 
       {/* Info Box */}
       <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">

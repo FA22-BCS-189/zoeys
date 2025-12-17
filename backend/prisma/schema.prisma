@@ -8,34 +8,44 @@ datasource db {
 }
 
 model Collection {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  order       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  image       String?
-  products    Product[]
+  id                String    @id @default(uuid())
+  name              String    @unique
+  slug              String    @unique
+  description       String?
+  order             Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  image             String?
+  imageAlt          String?
+  metaTitle         String?
+  metaDescription   String?
+  keywords          String?
+  products          Product[]
 }
 
 model Product {
-  id             String      @id @default(uuid())
-  name           String
-  color          String
-  price          Float
-  pieces         String      @default("3 pc")
-  quantity       Int         @default(1)
-  description    String?
-  seoDescription String?
-  images         String[]    @default([])
-  slug           String      @unique
-  collectionId   String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  stockStatus    String      @default("in_stock")
-  orderItems     OrderItem[]
-  collection     Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  id                String      @id @default(uuid())
+  name              String
+  color             String
+  price             Float
+  pieces            String      @default("3 pc")
+  quantity          Int         @default(1)
+  description       String?
+  seoDescription    String?
+  images            String[]    @default([])
+  imageAlts         String[]    @default([])
+  slug              String      @unique
+  collectionId      String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  stockStatus       String      @default("in_stock")
+  metaTitle         String?
+  metaDescription   String?
+  keywords          String?
+  structuredContent Json?       @default("{}")
+  jsonLdSchema      Json?
+  orderItems        OrderItem[]
+  collection        Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@index([collectionId])
   @@index([quantity])
@@ -80,7 +90,7 @@ model PageContent {
   id              String   @id @default(uuid())
   pageKey         String   @unique
   title           String
-  content         String   @db.Text
+  content         Json     @default("{}")
   metaTitle       String?
   metaDescription String?
   keywords        String?

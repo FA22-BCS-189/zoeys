@@ -14,8 +14,12 @@ const About = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const data = await contentAPI.getByKey('about');
-        setContent(data || {});
+        const apiResponse = await contentAPI.getByKey('about');
+        // contentAPI.getByKey returns { success, data }
+        const pageContent = apiResponse.data || {};
+        setContent(pageContent);
+        console.log('API Response:', apiResponse);
+        console.log('Loaded about page content:', pageContent);
       } catch (error) {
         console.error('Error fetching content:', error);
       } finally {
@@ -27,18 +31,20 @@ const About = () => {
 
   // Set SEO meta tags on component mount
   useEffect(() => {
-    if (!loading) {
-      setPageMeta({
-        title: content.metaTitle || 'Our Story - Heritage & Craftsmanship',
-        description: content.metaDescription || 'Discover Zoey\'s Heritage Embroidered Fabrics - preserving centuries-old Bahawalpur embroidery techniques including pakka tanka, tarkashi, cut dana, and chicken kaari work.',
-        keywords: content.keywords || 'bahawalpur embroidery heritage, traditional pakistani crafts, artisan support, embroidery techniques, pakka tanka, tarkashi, cut dana, chicken kaari, handcrafted fabrics',
-        url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/about`,
-        type: 'website'
-      });
+    // Always set meta tags, use database content if available
+    setPageMeta({
+      title: content.metaTitle || 'Our Story - Heritage & Craftsmanship',
+      description: content.metaDescription || 'Discover Zoey\'s Heritage Embroidered Fabrics - preserving centuries-old Bahawalpur embroidery techniques including pakka tanka, tarkashi, cut dana, and chicken kaari work.',
+      keywords: content.keywords || 'bahawalpur embroidery heritage, traditional pakistani crafts, artisan support, embroidery techniques, pakka tanka, tarkashi, cut dana, chicken kaari, handcrafted fabrics',
+      url: `${import.meta.env.VITE_SITE_URL || 'https://yourdomain.com'}/about`,
+      type: 'website'
+    });
 
-      // Inject organization schema
-      const organizationSchema = getOrganizationSchema();
-      const faqSchema = getFAQSchema([
+    // Inject organization schema
+    const organizationSchema = getOrganizationSchema();
+    
+    // Use FAQs from database or fallback to defaults
+    const faqData = content.content?.faqs && content.content.faqs.length > 0 ? content.content.faqs : [
         {
           question: "What is Bahawalpur embroidery?",
           answer: "Bahawalpur embroidery is a traditional Pakistani craft from the Punjab region, known for distinctive techniques like pakka tanka (bold colorful stitches), tarkashi (delicate threadwork), cut dana (sparkly embellishments), and chicken kaari (intricate patterns)."
@@ -55,12 +61,13 @@ const About = () => {
           question: "How long does it take to create one embroidered piece?",
           answer: "Depending on the complexity and embroidery technique, a single piece can take our artisans from several days to weeks to complete, with meticulous attention to every stitch and detail."
         }
-      ]);
+      ];
+      
+      const faqSchema = getFAQSchema(faqData);
 
       injectSchema(organizationSchema);
       injectSchema(faqSchema);
-    }
-  }, [loading, content]);
+  }, [content, loading]);
 
   const values = [
     {
@@ -128,32 +135,13 @@ const About = () => {
               </h2>
 
               <div className="space-y-4 text-charcoal/70 leading-relaxed">
-                <p>
-                  Bahawalpur, located in the heart of Punjab, Pakistan, has been a center of
-                  traditional embroidery for centuries. The region is renowned for its distinctive
-                  embroidery styles including{' '}
-                  <strong className="text-emerald-600 font-semibold">pakka tanka</strong>,
-                  <strong className="text-emerald-600 font-semibold"> tarkashi</strong>,
-                  <strong className="text-emerald-600 font-semibold"> cut dana work</strong>, and the
-                  intricate <strong className="text-emerald-600 font-semibold"> chicken kaari</strong>{' '}
-                  technique.
-                </p>
+                <div className="whitespace-pre-line">
+                  {content.content?.aboutText || `Bahawalpur, located in the heart of Punjab, Pakistan, has been a center of traditional embroidery for centuries. The region is renowned for its distinctive embroidery styles including pakka tanka, tarkashi, cut dana work, and the intricate chicken kaari technique.
 
-                <p>
-                  Each embroidery style tells its own story. Pakka tanka features bold, colorful
-                  stitches that create striking patterns. Tarkashi work involves delicate threadwork
-                  that adds subtle elegance. Cut dana embellishments bring sparkle and glamour, while
-                  chicken kaari's intricate patterns showcase the pinnacle of embroidery artistry.
-                </p>
+Each embroidery style tells its own story. Pakka tanka features bold, colorful stitches that create striking patterns. Tarkashi work involves delicate threadwork that adds subtle elegance. Cut dana embellishments bring sparkle and glamour, while chicken kaari's intricate patterns showcase the pinnacle of embroidery artistry.
 
-                <aside className="bg-emerald-50 p-6 rounded-lg my-6">
-                  <p className="text-charcoal italic">
-                    At Zoey's, we work directly with skilled artisans who have inherited these
-                    techniques from their ancestors. Every piece is handcrafted with patience,
-                    precision, and pride, ensuring that each stitch carries forward a legacy of
-                    excellence.
-                  </p>
-                </aside>
+At Zoey's, we work directly with skilled artisans who have inherited these techniques from their ancestors. Every piece is handcrafted with patience, precision, and pride, ensuring that each stitch carries forward a legacy of excellence.`}
+                </div>
               </div>
             </motion.article>
 
@@ -334,7 +322,7 @@ const About = () => {
           </motion.header>
 
           <div className="max-w-3xl mx-auto space-y-6">
-            {[
+            {(content.content?.faqs && content.content.faqs.length > 0 ? content.content.faqs : [
               {
                 question: "What is Bahawalpur embroidery?",
                 answer: "Bahawalpur embroidery is a traditional Pakistani craft from the Punjab region, known for distinctive techniques like pakka tanka (bold colorful stitches), tarkashi (delicate threadwork), cut dana (sparkly embellishments), and chicken kaari (intricate patterns)."
@@ -351,7 +339,7 @@ const About = () => {
                 question: "How long does it take to create one embroidered piece?",
                 answer: "Depending on the complexity and embroidery technique, a single piece can take our artisans from several days to weeks to complete, with meticulous attention to every stitch and detail."
               }
-            ].map((faq, index) => (
+            ]).map((faq, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}

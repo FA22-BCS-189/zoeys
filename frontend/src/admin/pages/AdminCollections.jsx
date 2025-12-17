@@ -18,11 +18,16 @@ const AdminCollections = () => {
   const [editingCollection, setEditingCollection] = useState(null);
   const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [generatingSEO, setGeneratingSEO] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     description: '',
     image: '',
+    imageAlt: '',
+    metaTitle: '',
+    metaDescription: '',
+    keywords: '',
     order: 0,
   });
 
@@ -82,15 +87,81 @@ const AdminCollections = () => {
   };
 
   const handleEdit = (collection) => {
+    console.log('Editing collection:', collection);
+    console.log('Collection SEO data:', {
+      metaTitle: collection.metaTitle,
+      metaDescription: collection.metaDescription,
+      keywords: collection.keywords,
+      imageAlt: collection.imageAlt,
+      structuredContent: collection.structuredContent
+    });
+    
     setEditingCollection(collection);
     setFormData({
       name: collection.name,
       slug: collection.slug,
       description: collection.description || '',
       image: collection.image || '',
+      imageAlt: collection.imageAlt || '',
+      metaTitle: collection.metaTitle || '',
+      metaDescription: collection.metaDescription || '',
+      keywords: collection.keywords || '',
       order: collection.order || 0,
     });
     setShowModal(true);
+  };
+
+  const handleGenerateSEO = async () => {
+    try {
+      setGeneratingSEO(true);
+      
+      // Prepare collection data for AI generation
+      const productCount = products.filter(p => p.collectionId === editingCollection?.id).length || 0;
+      const collectionData = {
+        name: formData.name,
+        description: formData.description,
+        productCount
+      };
+
+      console.log('Generating SEO for collection:', collectionData);
+
+      // Call SEO generation endpoint
+      const response = editingCollection 
+        ? await adminAPI.generateCollectionSEO(editingCollection.id)
+        : await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/collections/generate-seo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ collectionData })
+          }).then(r => r.json());
+      
+      console.log('Collection SEO Response:', response);
+      
+      if (response.success && response.data) {
+        const seoData = response.data;
+        
+        // Generate description from meta description
+        let generatedDescription = seoData.metaDescription || '';
+        
+        setFormData({
+          ...formData,
+          description: generatedDescription,
+          metaTitle: seoData.metaTitle || formData.metaTitle,
+          metaDescription: seoData.metaDescription || formData.metaDescription,
+          keywords: seoData.keywords || formData.keywords,
+          imageAlt: seoData.imageAlt || formData.imageAlt
+        });
+        
+        const generationType = seoData.generatedBy === 'ai' ? '🤖 AI' : '📝 Template';
+        showNotification(`${generationType} content generated successfully! All SEO fields populated.`);
+      } else {
+        throw new Error(response.error || 'Failed to generate SEO content');
+      }
+    } catch (error) {
+      console.error('Error generating collection SEO:', error);
+      showNotification('Failed to generate SEO content', 'error');
+    } finally {
+      setGeneratingSEO(false);
+    }
   };
 
   const handleDeleteClick = (collection) => {
@@ -153,7 +224,11 @@ const AdminCollections = () => {
       name: '', 
       slug: '', 
       description: '', 
-      image: '', 
+      image: '',
+      imageAlt: '',
+      metaTitle: '',
+      metaDescription: '',
+      keywords: '',
       order: 0 
     });
   };
@@ -360,20 +435,41 @@ const AdminCollections = () => {
               </div>
 
               {/* Description */}
-              {/* Description */}
-<div>
-  <label className="block text-sm font-medium text-charcoal mb-2">
-    Description
-  </label>
-  
-  <RichTextEditor
-    value={formData.description}
-    onChange={(newValue) => setFormData({ ...formData, description: newValue })}
-    placeholder="Brief description of this collection"
-    rows={5}
-  />
-  
-</div>
+              {/* Description with AI Generation */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-charcoal">
+                    Description
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSEO}
+                    disabled={generatingSEO || !formData.name}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    title={!formData.name ? 'Fill in collection name first' : 'Generate description and all SEO fields with AI'}
+                  >
+                    {generatingSEO ? (
+                      <>
+                        <span className="animate-spin">⚙️</span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <span>✨</span>
+                        Generate with AI
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                <RichTextEditor
+                  value={formData.description}
+                  onChange={(newValue) => setFormData({ ...formData, description: newValue })}
+                  placeholder="Enter collection description or generate with AI..."
+                  rows={5}
+                />
+                <p className="text-xs text-charcoal/60 mt-1">Brief description of this collection</p>
+              </div>
 
               {/* Image */}
               <div>
@@ -403,6 +499,73 @@ const AdminCollections = () => {
                     />
                   </div>
                 )}
+              </div>
+
+              {/* SEO Section */}
+              <div className="bg-purple-50/50 -mx-6 px-6 py-4 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-charcoal flex items-center gap-2">
+                    <span>🔍</span>
+                    SEO & Meta Tags
+                  </h4>
+                  <span className="text-xs text-purple-600 font-medium">Auto-filled by AI ✨</span>
+                </div>
+                
+                <div className="space-y-3">
+
+                <div>
+                  <label className="block text-xs font-medium text-charcoal/70 mb-1">Meta Title</label>
+                  <input
+                    type="text"
+                    value={formData.metaTitle}
+                    onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                    placeholder="SEO title for search engines (50-60 chars)"
+                    className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    maxLength="60"
+                  />
+                  <p className={`text-xs mt-1 ${(formData.metaTitle?.length >= 50 && formData.metaTitle?.length <= 60) ? 'text-emerald-600' : 'text-charcoal/60'}`}>
+                    {formData.metaTitle?.length || 0}/60 characters
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-charcoal/70 mb-1">Meta Description</label>
+                  <textarea
+                    value={formData.metaDescription}
+                    onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                    placeholder="SEO description for search results (150-160 chars)"
+                    rows="2"
+                    className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    maxLength="160"
+                  />
+                  <p className={`text-xs mt-1 ${(formData.metaDescription?.length >= 150 && formData.metaDescription?.length <= 160) ? 'text-emerald-600' : 'text-charcoal/60'}`}>
+                    {formData.metaDescription?.length || 0}/160 characters
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-charcoal/70 mb-1">Keywords (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={formData.keywords}
+                    onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                    placeholder="collection name, bahawalpur embroidery, traditional..."
+                    className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-charcoal/70 mb-1">Image Alt Text</label>
+                  <input
+                    type="text"
+                    value={formData.imageAlt}
+                    onChange={(e) => setFormData({ ...formData, imageAlt: e.target.value })}
+                    placeholder="Descriptive alt text for collection banner image"
+                    className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-charcoal/60 mt-1">Describes the collection image for accessibility and SEO</p>
+                </div>
+                </div>
               </div>
 
               {/* Display Order */}

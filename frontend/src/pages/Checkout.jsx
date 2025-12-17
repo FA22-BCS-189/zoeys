@@ -333,7 +333,7 @@ const handleSubmitOrder = async (e) => {
                 {/* Email */}
                 <div>
                   <label htmlFor="customerEmail" className="block text-sm font-medium text-charcoal mb-2">
-                    Email (Optional)
+                    Email
                   </label>
                   <input
                     type="email"

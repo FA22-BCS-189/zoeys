@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { CartProvider } from './utils/CartContext';
 import Navbar from './components/Navbar';
@@ -57,18 +57,6 @@ function App() {
               <Footer />
             </div>
           } />
-          
-          {/* Collection Route - NEW */}
-          <Route path="/collection/:collectionSlug" element={
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-grow">
-                <Shop />
-              </main>
-              <Footer />
-            </div>
-          } />
-          
           <Route path="/cart" element={
             <div className="flex flex-col min-h-screen">
               <Navbar />
@@ -105,6 +93,17 @@ function App() {
               <Footer />
             </div>
           } />
+          
+          {/* Collection Routes */}
+          <Route path="/collection/:collectionSlug" element={
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">
+                <Shop />
+              </main>
+              <Footer />
+            </div>
+          } />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -116,9 +115,8 @@ function App() {
             <Route path="content" element={<AdminContent />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
-
-          {/* Product Routes - WILDCARD ROUTES LAST */}
-          {/* Clean Product URLs - NEW */}
+          
+          {/* Product Detail Route - MUST BE LAST (catches all remaining slugs) */}
           <Route path="/:slug" element={
             <div className="flex flex-col min-h-screen">
               <Navbar />
@@ -128,9 +126,6 @@ function App() {
               <Footer />
             </div>
           } />
-          
-          {/* Keep old product route for backward compatibility - OLD */}
-          <Route path="/product/:slug" element={<Navigate to="/:slug" replace />} />
         </Routes>
       </Router>
     </CartProvider>

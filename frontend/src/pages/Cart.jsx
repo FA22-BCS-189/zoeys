@@ -195,7 +195,7 @@ const Cart = () => {
                 }`}
               >
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link to={`/product/${item.slug}`} className="flex-shrink-0 mx-auto sm:mx-0">
+                  <Link to={`/${item.slug}`} className="flex-shrink-0 mx-auto sm:mx-0">
                     <img
                       src={item.images?.[0] || getPlaceholderImage(item.color)}
                       alt={`${item.name} in ${item.color} - Traditional Bahawalpur embroidery`}

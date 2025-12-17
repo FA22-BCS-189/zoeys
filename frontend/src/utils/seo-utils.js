@@ -264,7 +264,7 @@ export const getCollectionSchema = (collection, products) => ({
   "@type": "CollectionPage",
   "name": collection.name,
   "description": collection.description,
-  "url": `${BUSINESS_INFO.url}/collection/${collection.slug}`,
+  "url": `${BUSINESS_INFO.url}/${collection.slug}`,
   "mainEntity": {
     "@type": "ItemList",
     "numberOfItems": products.length,

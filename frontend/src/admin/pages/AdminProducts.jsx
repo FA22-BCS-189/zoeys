@@ -28,6 +28,12 @@ const AdminProducts = () => {
     quantity: 0,
     description: '',
     seoDescription: '',
+    metaTitle: '',
+    metaDescription: '',
+    keywords: '',
+    imageAlts: [],
+    structuredContent: null,
+    jsonLdSchema: null,
     collectionId: '',
     images: [],
     stockStatus: 'out_of_stock'
@@ -118,8 +124,14 @@ const AdminProducts = () => {
       price: product.price.toString(),
       pieces: product.pieces,
       quantity: product.quantity,
-      seoDescription: product.seoDescription || '',
       description: product.description || '',
+      seoDescription: product.seoDescription || '',
+      metaTitle: product.metaTitle || '',
+      metaDescription: product.metaDescription || '',
+      keywords: product.keywords || '',
+      imageAlts: product.imageAlts || [],
+      structuredContent: product.structuredContent || null,
+      jsonLdSchema: product.jsonLdSchema || null,
       collectionId: product.collectionId,
       images: product.images || [],
       stockStatus: product.stockStatus
@@ -152,34 +164,81 @@ const AdminProducts = () => {
     try {
       setGeneratingSEO(true);
       
-      // If editing existing product, use API
+      // Prepare product data for AI generation
+      const collection = collections.find(c => c.id === formData.collectionId);
+      const productData = {
+        name: formData.name,
+        color: formData.color,
+        price: parseFloat(formData.price) || 0,
+        pieces: formData.pieces,
+        description: formData.description,
+        collectionName: collection?.name,
+        images: formData.images,
+        slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        stockStatus: formData.stockStatus
+      };
+
+      console.log('Generating SEO for product:', productData);
+
+      // Call new SEO generation endpoint
+      let response;
       if (editingProduct) {
-        const response = await adminAPI.generateSEODescription(editingProduct.id);
+        response = await adminAPI.generateProductSEO(editingProduct.id);
+      } else {
+        const apiUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/products/generate-seo`;
+        console.log('Calling API:', apiUrl);
         
-        if (response.success) {
-          setFormData({
-            ...formData,
-            seoDescription: response.data.seoDescription
-          });
-          showNotification('SEO description generated successfully!');
-          
-          if (response.validation?.warnings?.length > 0) {
-            console.log('SEO Validation:', response.validation);
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productData })
+        });
+        
+        response = await res.json();
+      }
+      
+      console.log('SEO Generation Response:', response);
+      
+      if (response.success && response.data) {
+        const seoData = response.data;
+        
+        // Generate a clean, concise description from AI data
+        let generatedDescription = seoData.metaDescription || '';
+        
+        // Add key features for a richer description
+        if (seoData.structuredContent?.h3 && seoData.structuredContent.h3.length > 0) {
+          const keyFeatures = seoData.structuredContent.h3.slice(0, 3);
+          if (keyFeatures.length > 0) {
+            generatedDescription += '\n\nKey Features:\n• ' + keyFeatures.join('\n• ');
           }
         }
-      } else {
-        // For new products, generate client-side using template
-        const collection = collections.find(c => c.id === formData.collectionId);
-        const seoDesc = generateClientSideSEO(formData, collection);
+        
         setFormData({
           ...formData,
-          seoDescription: seoDesc
+          description: generatedDescription,
+          metaTitle: seoData.metaTitle || formData.metaTitle,
+          metaDescription: seoData.metaDescription || formData.metaDescription,
+          keywords: seoData.keywords || formData.keywords,
+          imageAlts: seoData.imageAlt || formData.imageAlts,
+          structuredContent: seoData.structuredContent || formData.structuredContent,
+          jsonLdSchema: seoData.jsonLdSchema || formData.jsonLdSchema,
+          seoDescription: seoData.metaDescription || formData.seoDescription
         });
-        showNotification('SEO description generated successfully!');
+        
+        const generationType = seoData.generatedBy === 'ai' ? '🤖 AI' : '📝 Template';
+        showNotification(`${generationType} content generated successfully! All SEO fields populated.`);
+        console.log('Form updated with:', { 
+          metaTitle: seoData.metaTitle,
+          hasStructuredContent: !!seoData.structuredContent,
+          hasJsonLd: !!seoData.jsonLdSchema,
+          imageAltsCount: seoData.imageAlt?.length || 0
+        });
+      } else {
+        throw new Error(response.error || 'Failed to generate SEO content');
       }
     } catch (error) {
-      console.error('Error generating SEO description:', error);
-      showNotification('Failed to generate SEO description', 'error');
+      console.error('Error generating SEO content:', error);
+      showNotification(`Failed to generate SEO: ${error.message}`, 'error');
     } finally {
       setGeneratingSEO(false);
     }
@@ -211,9 +270,15 @@ const AdminProducts = () => {
       color: '',
       price: '',
       pieces: '3 pc',
-      seoDescription: '',
       quantity: 0,
       description: '',
+      seoDescription: '',
+      metaTitle: '',
+      metaDescription: '',
+      keywords: '',
+      imageAlts: [],
+      structuredContent: null,
+      jsonLdSchema: null,
       collectionId: '',
       images: [],
       stockStatus: 'out_of_stock'
@@ -510,24 +575,16 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              <div>
-  <label className="block text-sm font-medium text-charcoal mb-2">Description</label>
-  <RichTextEditor
-    value={formData.description}
-    onChange={(content) => setFormData({ ...formData, description: content })}
-    placeholder="Enter product description..."
-  />
-</div>
-
+              {/* Description with AI Generation */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-charcoal">SEO Meta Description</label>
+                  <label className="block text-sm font-medium text-charcoal">Description</label>
                   <button
                     type="button"
                     onClick={handleGenerateSEO}
                     disabled={generatingSEO || !formData.name || !formData.color || !formData.collectionId}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={!formData.name || !formData.color || !formData.collectionId ? 'Fill in name, color, and collection first' : ''}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    title={!formData.name || !formData.color || !formData.collectionId ? 'Fill in name, color, and collection first' : 'Generate description and all SEO fields with AI'}
                   >
                     {generatingSEO ? (
                       <>
@@ -537,31 +594,211 @@ const AdminProducts = () => {
                     ) : (
                       <>
                         <span>✨</span>
-                        Generate SEO Description (AI)
+                        Generate with AI
                       </>
                     )}
                   </button>
                 </div>
-                <textarea
-                  value={formData.seoDescription}
-                  onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
-                  placeholder="Enter SEO meta description (120-160 characters recommended)"
-                  rows="3"
-                  className="w-full px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                <RichTextEditor
+                  value={formData.description}
+                  onChange={(content) => setFormData({ ...formData, description: content })}
+                  placeholder="Enter product description or generate with AI..."
                 />
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-charcoal/60">
-                    Used for search engine results and social media previews
-                  </p>
-                  <p className={`text-xs font-medium ${
-                    formData.seoDescription.length >= 120 && formData.seoDescription.length <= 160
-                      ? 'text-emerald-600'
-                      : formData.seoDescription.length > 160
-                      ? 'text-rose-600'
-                      : 'text-amber-600'
-                  }`}>
-                    {formData.seoDescription.length} chars
-                  </p>
+                <p className="text-xs text-charcoal/60 mt-1">Main product description shown on product page</p>
+              </div>
+
+              {/* SEO Fields Section */}
+              <div className="bg-purple-50/50 -mx-6 px-6 py-4 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-charcoal flex items-center gap-2">
+                    <span>🔍</span>
+                    SEO & Meta Tags
+                  </h4>
+                  <span className="text-xs text-purple-600 font-medium">Auto-filled by AI ✨</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal/70 mb-1">Meta Title</label>
+                    <input
+                      type="text"
+                      value={formData.metaTitle}
+                      onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                      placeholder="SEO title for search engines (50-60 chars)"
+                      className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      maxLength="60"
+                    />
+                    <p className={`text-xs mt-1 ${(formData.metaTitle?.length >= 50 && formData.metaTitle?.length <= 60) ? 'text-emerald-600' : 'text-charcoal/60'}`}>
+                      {formData.metaTitle?.length || 0}/60 characters
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal/70 mb-1">Meta Description</label>
+                    <textarea
+                      value={formData.metaDescription}
+                      onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                      placeholder="SEO description for search results (150-160 chars)"
+                      rows="2"
+                      className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      maxLength="160"
+                    />
+                    <p className={`text-xs mt-1 ${(formData.metaDescription?.length >= 150 && formData.metaDescription?.length <= 160) ? 'text-emerald-600' : 'text-charcoal/60'}`}>
+                      {formData.metaDescription?.length || 0}/160 characters
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal/70 mb-1">Keywords (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={formData.keywords}
+                      onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                      placeholder="bahawalpur embroidery, traditional pakistani, handcrafted..."
+                      className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal/70 mb-1">Image Alt Texts (one per line)</label>
+                    <textarea
+                      value={Array.isArray(formData.imageAlts) ? formData.imageAlts.join('\n') : ''}
+                      onChange={(e) => setFormData({ ...formData, imageAlts: e.target.value.split('\n').filter(t => t.trim()) })}
+                      placeholder="Front view of embroidered dress&#10;Close-up of embroidery details&#10;Complete set display"
+                      rows="3"
+                      className="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    />
+                    <p className="text-xs text-charcoal/60 mt-1">One alt text per line for each product image</p>
+                  </div>
+
+                  {/* Structured Content Editor */}
+                  {formData.structuredContent && (
+                    <div className="bg-white/80 rounded-lg p-4 border border-purple-200 space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-purple-700">📝 Structured Content (Editable)</p>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, structuredContent: null })}
+                          className="text-xs text-red-600 hover:text-red-700"
+                        >
+                          Clear
+                        </button>
+                      </div>
+
+                      {/* H1 Editor */}
+                      <div>
+                        <label className="block text-xs font-medium text-charcoal/70 mb-1">Main Heading (H1)</label>
+                        <input
+                          type="text"
+                          value={formData.structuredContent.h1 || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            structuredContent: {
+                              ...formData.structuredContent,
+                              h1: e.target.value
+                            }
+                          })}
+                          placeholder="Main product heading"
+                          className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Sections Editor (H2 + H3 points) */}
+                      {formData.structuredContent.sections && formData.structuredContent.sections.length > 0 && (
+                        <div className="space-y-3">
+                          <label className="block text-xs font-medium text-charcoal/70">Content Sections</label>
+                          {formData.structuredContent.sections.map((section, sectionIndex) => (
+                            <div key={sectionIndex} className="bg-purple-50/50 rounded p-3 space-y-2">
+                              {/* H2 Heading */}
+                              <div>
+                                <label className="block text-xs font-medium text-charcoal/60 mb-1">Section {sectionIndex + 1} - Heading (H2)</label>
+                                <input
+                                  type="text"
+                                  value={section.heading || ''}
+                                  onChange={(e) => {
+                                    const newSections = [...formData.structuredContent.sections];
+                                    newSections[sectionIndex].heading = e.target.value;
+                                    setFormData({
+                                      ...formData,
+                                      structuredContent: {
+                                        ...formData.structuredContent,
+                                        sections: newSections
+                                      }
+                                    });
+                                  }}
+                                  placeholder="Section heading"
+                                  className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs focus:ring-1 focus:ring-purple-500"
+                                />
+                              </div>
+
+                              {/* H3 Points */}
+                              <div>
+                                <label className="block text-xs font-medium text-charcoal/60 mb-1">Bullet Points (one per line)</label>
+                                <textarea
+                                  value={section.points?.join('\n') || ''}
+                                  onChange={(e) => {
+                                    const newSections = [...formData.structuredContent.sections];
+                                    newSections[sectionIndex].points = e.target.value.split('\n').filter(p => p.trim());
+                                    setFormData({
+                                      ...formData,
+                                      structuredContent: {
+                                        ...formData.structuredContent,
+                                        sections: newSections
+                                      }
+                                    });
+                                  }}
+                                  placeholder="Point 1&#10;Point 2"
+                                  rows="2"
+                                  className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs focus:ring-1 focus:ring-purple-500 resize-none"
+                                />
+                              </div>
+
+                              {/* Remove Section Button */}
+                              {formData.structuredContent.sections.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newSections = formData.structuredContent.sections.filter((_, i) => i !== sectionIndex);
+                                    setFormData({
+                                      ...formData,
+                                      structuredContent: {
+                                        ...formData.structuredContent,
+                                        sections: newSections
+                                      }
+                                    });
+                                  }}
+                                  className="text-xs text-red-600 hover:text-red-700"
+                                >
+                                  Remove Section
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
+                          {/* Add Section Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSections = [
+                                ...formData.structuredContent.sections,
+                                { heading: '', points: [] }
+                              ];
+                              setFormData({
+                                ...formData,
+                                structuredContent: {
+                                  ...formData.structuredContent,
+                                  sections: newSections
+                                }
+                              });
+                            }}
+                            className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                          >
+                            + Add Section
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

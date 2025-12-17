@@ -456,6 +456,10 @@ router.post('/collections',
     body('slug').trim().notEmpty().withMessage('Slug is required'),
     body('description').optional().trim(),
     body('image').optional().trim(),
+    body('imageAlt').optional().trim(),
+    body('metaTitle').optional().trim(),
+    body('metaDescription').optional().trim(),
+    body('keywords').optional().trim(),
     body('order').optional().isInt()
   ],
   async (req, res) => {
@@ -468,7 +472,7 @@ router.post('/collections',
         });
       }
 
-      const { name, slug, description, image, order } = req.body;
+      const { name, slug, description, image, imageAlt, metaTitle, metaDescription, keywords, order } = req.body;
 
       const collection = await prisma.collection.create({
         data: {
@@ -476,6 +480,10 @@ router.post('/collections',
           slug,
           description: description || null,
           image: image || null,
+          imageAlt: imageAlt || null,
+          metaTitle: metaTitle || null,
+          metaDescription: metaDescription || null,
+          keywords: keywords || null,
           order: order ? parseInt(order) : 0
         }
       });
@@ -499,13 +507,17 @@ router.post('/collections',
 router.patch('/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug, description, image, order } = req.body;
+    const { name, slug, description, image, imageAlt, metaTitle, metaDescription, keywords, order } = req.body;
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (image !== undefined) updateData.image = image;
+    if (imageAlt !== undefined) updateData.imageAlt = imageAlt;
+    if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
+    if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
+    if (keywords !== undefined) updateData.keywords = keywords;
     if (order !== undefined) updateData.order = parseInt(order);
 
     const collection = await prisma.collection.update({
@@ -687,7 +699,7 @@ router.post('/content', async (req, res) => {
       data: {
         pageKey,
         title,
-        content,
+        content: content || {},
         metaTitle,
         metaDescription,
         keywords,
@@ -719,7 +731,7 @@ router.patch('/content/:id', async (req, res) => {
       where: { id },
       data: {
         ...(title && { title }),
-        ...(content && { content }),
+        ...(content !== undefined && { content }),
         ...(metaTitle !== undefined && { metaTitle }),
         ...(metaDescription !== undefined && { metaDescription }),
         ...(keywords !== undefined && { keywords }),

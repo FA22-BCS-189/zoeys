@@ -1,25 +1,33 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Crown, Heart, Facebook, Instagram, Twitter } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { settingsAPI } from '../utils/api';
+import { settingsAPI, contentAPI } from '../utils/api';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [settings, setSettings] = useState({});
+  const [footerContent, setFooterContent] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
-        const data = await settingsAPI.getAll();
-        setSettings(data);
+        const [settingsData, contentResponse] = await Promise.all([
+          settingsAPI.getAll(),
+          contentAPI.getByKey('footer').catch(() => ({ success: false, data: {} }))
+        ]);
+        setSettings(settingsData);
+        // contentResponse is { success, data }
+        const contentData = contentResponse.data || {};
+        setFooterContent(contentData);
+        console.log('Footer content loaded:', contentData);
       } catch (error) {
-        console.error('Error fetching settings:', error);
+        console.error('Error fetching footer data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSettings();
+    fetchData();
   }, []);
 
   return (
@@ -48,7 +56,7 @@ const Footer = () => {
             </div>
             
             <p className="text-sm text-softwhite/80 leading-relaxed">
-              {settings.footer_about || 'Handcrafted embroidered masterpieces from the heart of Bahawalpur, preserving centuries of traditional craftsmanship for the modern connoisseur.'}
+              {footerContent.content?.aboutText || settings.footer_about || 'Handcrafted embroidered masterpieces from the heart of Bahawalpur, preserving centuries of traditional craftsmanship for the modern connoisseur.'}
             </p>
             
             {/* Social Media Links */}

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Clock, Users, Sparkles } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
-import { productsAPI, collectionsAPI, settingsAPI } from '../utils/api';
+import { productsAPI, collectionsAPI, settingsAPI, contentAPI } from '../utils/api';
 import { 
   setPageMeta, 
   getOrganizationSchema, 
@@ -18,16 +18,43 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [collections, setCollections] = useState([]);
   const [settings, setSettings] = useState({});
+  const [homeContent, setHomeContent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // SEO Setup
     setLanguage('en');
-    
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [productsRes, collectionsRes, settingsData, contentResponse] = await Promise.all([
+        productsAPI.getAll({ limit: 6 }),
+        collectionsAPI.getAll(),
+        settingsAPI.getAll(),
+        contentAPI.getByKey('home')
+      ]);
+      setFeaturedProducts(productsRes.data.data.slice(0, 6));
+      setCollections(collectionsRes.data.data);
+      setSettings(settingsData || {});
+      // contentResponse is { success, data }
+      const contentData = contentResponse.data || {};
+      setHomeContent(contentData);
+      console.log('Home page content loaded:', contentData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Always set meta tags, use database content if available
     setPageMeta({
-      title: "Authentic Bahawalpur Embroidery & Handcrafted Pakistani Fabrics",
-      description: "Shop exquisite handcrafted Bahawalpur embroidery including chicken kaari, pakka tanka, tarkashi, and cut dana work. Traditional Pakistani embroidered dresses with heritage craftsmanship delivered nationwide.",
-      keywords: "bahawalpur embroidery, chicken kaari pakistan, pakka tanka embroidery, tarkashi work, cut dana embroidery, traditional embroidered dresses, pakistani embroidered fabrics, handcrafted embroidery lahore, shadow work embroidery, mirror work phulkari",
+      title: homeContent?.metaTitle || "Authentic Bahawalpur Embroidery & Handcrafted Pakistani Fabrics",
+      description: homeContent?.metaDescription || "Shop exquisite handcrafted Bahawalpur embroidery including chicken kaari, pakka tanka, tarkashi, and cut dana work. Traditional Pakistani embroidered dresses delivered nationwide.",
+      keywords: homeContent?.keywords || "bahawalpur embroidery, chicken kaari pakistan, pakka tanka embroidery, tarkashi work, cut dana embroidery, traditional embroidered dresses, pakistani embroidered fabrics",
       url: BUSINESS_INFO.url,
       type: "website"
     });
@@ -38,30 +65,20 @@ const Home = () => {
       getWebSiteSchema()
     ];
     injectMultipleSchemas(schemas);
-
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [productsRes, collectionsRes, settingsData] = await Promise.all([
-        productsAPI.getAll({ limit: 6 }),
-        collectionsAPI.getAll(),
-        settingsAPI.getAll()
-      ]);
-      setFeaturedProducts(productsRes.data.data.slice(0, 6));
-      setCollections(collectionsRes.data.data);
-      setSettings(settingsData || {});
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [homeContent]);
 
   if (loading) return <Loading />;
 
-  const triviaFacts = [
+  const heroTitle = homeContent?.content?.heroTitle || 'Handcrafted Bahawalpur Embroidery';
+  const heroSubtitle = homeContent?.content?.heroSubtitle || 'Authentic chicken kaari, pakka tanka, and tarkashi embroidery crafted by master artisans. Preserving heritage, one stitch at a time.';
+  const ctaText = homeContent?.content?.ctaText || 'Browse Collections';
+
+  const triviaFacts = homeContent?.content?.trivia?.map((item, index) => ({
+    icon: [Clock, Users, Sparkles][index] || Sparkles,
+    title: item.title,
+    fact: item.stat,
+    stat: item.fact
+  })) || [
     {
       icon: Clock,
       title: 'The Art of Patience',
@@ -103,11 +120,11 @@ const Home = () => {
           className="space-y-2 relative z-10"
         >
           <h1 className="text-3xl md:text-4xl font-display font-bold leading-tight">
-            Handcrafted Bahawalpur Embroidery
+            {heroTitle}
           </h1>
 
           <p className="text-sm md:text-base text-charcoal/80 max-w-2xl mx-auto bg-amber/60 backdrop-blur-sm px-4 py-3 rounded-lg">
-            Authentic chicken kaari, pakka tanka, and tarkashi embroidery inspired by Mughal heritage, crafted for the modern minimalist.
+            {heroSubtitle}
           </p>
 
           <Link
@@ -115,7 +132,7 @@ const Home = () => {
             className="btn-primary inline-flex items-center space-x-2 mt-2 text-sm"
             aria-label="Explore our embroidery collection"
           >
-            <span>Explore Collection</span>
+            <span>{ctaText}</span>
             <ArrowRight size={16} />
           </Link>
         </motion.div>

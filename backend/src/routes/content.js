@@ -48,6 +48,8 @@ router.get('/:pageKey', async (req, res) => {
         content: true,
         metaTitle: true,
         metaDescription: true,
+        keywords: true,
+        published: true,
         updatedAt: true
       }
     });

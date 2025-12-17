@@ -30,9 +30,18 @@ export const ordersAPI = {
 
 // Content API
 export const contentAPI = {
-  getAll: () => api.get('/content'),
-  getByKey: (pageKey) => api.get(`/content/${pageKey}`),
-  getByPageKey: (pageKey) => api.get(`/content/${pageKey}`)
+  getAll: async () => {
+    const response = await api.get('/content');
+    return response.data;
+  },
+  getByKey: async (pageKey) => {
+    const response = await api.get(`/content/${pageKey}`);
+    return response.data;
+  },
+  getByPageKey: async (pageKey) => {
+    const response = await api.get(`/content/${pageKey}`);
+    return response.data;
+  }
 };
 
 // Settings API
@@ -65,6 +74,14 @@ export const adminAPI = {
   updateProduct: (productId, productData) => 
     api.patch(`/admin/products/${productId}`, productData),
   deleteProduct: (productId) => api.delete(`/admin/products/${productId}`),
+  
+  // Content Management
+  getContent: () => api.get('/admin/content'),
+  getContentByKey: (pageKey) => api.get(`/admin/content/${pageKey}`),
+  createContent: (contentData) => api.post('/admin/content', contentData),
+  updateContent: (id, contentData) => api.patch(`/admin/content/${id}`, contentData),
+  deleteContent: (id) => api.delete(`/admin/content/${id}`),
+  generateContent: (pageKey, context = {}) => api.post(`/admin/content/${pageKey}/generate`, context),
   
   // Stats
   getStats: () => api.get('/admin/stats')

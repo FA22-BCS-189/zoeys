@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X, Sparkles, Crown } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/Loading';
-import { productsAPI, collectionsAPI } from '../utils/api';
+import { productsAPI, collectionsAPI, contentAPI } from '../utils/api';
 import {
   setPageMeta,
   getBreadcrumbSchema,
@@ -20,6 +20,7 @@ const Shop = () => {
   const location = useLocation();
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState([]);
+  const [shopContent, setShopContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [currentCollection, setCurrentCollection] = useState(null);
@@ -32,7 +33,20 @@ const Shop = () => {
 
   useEffect(() => {
     fetchCollections();
+    fetchShopContent();
   }, []);
+
+  const fetchShopContent = async () => {
+    try {
+      const apiResponse = await contentAPI.getByKey('shop');
+      // contentAPI returns { success, data }
+      const contentData = apiResponse.data || {};
+      setShopContent(contentData);
+      console.log('Shop page content loaded:', contentData);
+    } catch (error) {
+      console.error('Error fetching shop content:', error);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -51,11 +65,11 @@ const Shop = () => {
     setCurrentCollection(current);
 
     if (collectionSlug && current) {
-      // Collection-specific SEO
+      // Collection-specific SEO - use shopContent for base meta tags
       setPageMeta({
-        title: `${current.name} - Traditional Bahawalpur Embroidery Collection`,
-        description: `${current.description} Shop authentic ${current.name.toLowerCase()} with handcrafted Bahawalpur embroidery. ${products.length} unique pieces available.`,
-        keywords: `${current.name}, bahawalpur embroidery, ${current.name.toLowerCase()}, traditional embroidered dresses, pakistani embroidery, handcrafted fabrics`,
+        title: shopContent?.metaTitle || `${current.name} - Traditional Bahawalpur Embroidery Collection`,
+        description: shopContent?.metaDescription || `${current.description} Shop authentic ${current.name.toLowerCase()} with handcrafted Bahawalpur embroidery.`,
+        keywords: shopContent?.keywords || `${current.name}, bahawalpur embroidery, traditional embroidered dresses`,
         url: `${BUSINESS_INFO.url}/collection/${collectionSlug}`,
         type: "website"
       });
@@ -73,11 +87,11 @@ const Shop = () => {
       ];
       injectMultipleSchemas(schemas);
     } else {
-      // General shop SEO
+      // General shop SEO - Always set, use database content if available
       setPageMeta({
-        title: "Shop Authentic Bahawalpur Embroidery | Traditional Pakistani Fabrics",
-        description: `Shop ${products.length}+ handcrafted Pakistani embroidered pieces. Authentic chicken kaari, pakka tanka, tarkashi, cut dana work, and traditional embroidered dresses. Cash on delivery available nationwide.`,
-        keywords: "shop bahawalpur embroidery, buy traditional embroidered dresses, pakistani embroidered fabrics online, chicken kaari for sale, pakka tanka embroidery, handcrafted embroidery pakistan",
+        title: shopContent?.metaTitle || "Shop Authentic Bahawalpur Embroidery | Traditional Pakistani Fabrics",
+        description: shopContent?.metaDescription || `Shop handcrafted Pakistani embroidered pieces. Authentic chicken kaari, pakka tanka, tarkashi, and traditional embroidered dresses.`,
+        keywords: shopContent?.keywords || "shop bahawalpur embroidery, buy traditional embroidered dresses, pakistani embroidered fabrics online",
         url: `${BUSINESS_INFO.url}/shop`,
         type: "website"
       });
@@ -90,7 +104,7 @@ const Shop = () => {
       const schemas = [getBreadcrumbSchema(breadcrumbs)];
       injectMultipleSchemas(schemas);
     }
-  }, [collectionSlug, collections, products]);
+  }, [collectionSlug, collections, products, shopContent]);
 
   const fetchCollections = async () => {
     try {
@@ -122,7 +136,7 @@ const Shop = () => {
   const handleCollectionChange = (slug) => {
     setSelectedCollection(slug);
     if (slug) {
-      navigate(`/collection/${slug}`);
+      navigate(`/${slug}`);
     } else {
       navigate('/shop');
     }
