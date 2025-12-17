@@ -31,13 +31,22 @@ export const ordersAPI = {
 // Content API
 export const contentAPI = {
   getAll: () => api.get('/content'),
+  getByKey: (pageKey) => api.get(`/content/${pageKey}`),
   getByPageKey: (pageKey) => api.get(`/content/${pageKey}`)
 };
 
 // Settings API
 export const settingsAPI = {
-  getAll: () => api.get('/settings'),
-  getByKey: (key) => api.get(`/settings/${key}`)
+  getAll: async () => {
+    const response = await api.get('/settings');
+    // Backend returns { data: {...key: value}, all: [...] }
+    // Return the key-value object for easier usage
+    return response.data.data || {};
+  },
+  getByKey: async (key) => {
+    const response = await api.get(`/settings/${key}`);
+    return response.data.data;
+  }
 };
 
 // Admin API

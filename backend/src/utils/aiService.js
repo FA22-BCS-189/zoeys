@@ -1,7 +1,102 @@
 /**
- * AI Service for generating SEO-optimized product descriptions
- * Uses OpenAI or a fallback template-based approach
+ * AI Service for generating SEO-optimized product descriptions and settings content
+ * Uses Gemini AI or a fallback template-based approach
  */
+
+/**
+ * Generate footer about text using Gemini AI
+ */
+export async function generateFooterAbout(businessName = 'Zoey\'s') {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  
+  if (!geminiApiKey) {
+    return `Handcrafted embroidered masterpieces from the heart of Bahawalpur, preserving centuries of traditional craftsmanship for the modern connoisseur.`;
+  }
+
+  const prompt = `Write a compelling 2-sentence footer description for ${businessName}, a Pakistani e-commerce business selling traditional Bahawalpur embroidered fabrics. The description should:
+- Be warm and inviting
+- Highlight heritage and craftsmanship
+- Be concise (max 160 characters)
+- Use professional language
+
+Return ONLY the description text, no quotes or extra formatting.`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API HTTP error:', response.status, errorData);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('Unexpected Gemini API response structure:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Gemini API');
+    }
+    
+    return data.candidates[0]?.content?.parts[0]?.text?.trim() || 
+      `Handcrafted embroidered masterpieces from the heart of Bahawalpur, preserving centuries of traditional craftsmanship for the modern connoisseur.`;
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    return `Handcrafted embroidered masterpieces from the heart of Bahawalpur, preserving centuries of traditional craftsmanship for the modern connoisseur.`;
+  }
+}
+
+/**
+ * Generate site tagline using Gemini AI
+ */
+export async function generateSiteTagline(businessName = 'Zoey\'s') {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  
+  if (!geminiApiKey) {
+    return 'Bahawalpur Heritage';
+  }
+
+  const prompt = `Create a short, memorable tagline (2-4 words max) for ${businessName}, a Pakistani e-commerce business selling traditional Bahawalpur embroidered fabrics. The tagline should evoke heritage, craftsmanship, and tradition. Return ONLY the tagline, no quotes.`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API HTTP error:', response.status, errorData);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('Unexpected Gemini API response structure:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Gemini API');
+    }
+    
+    return data.candidates[0]?.content?.parts[0]?.text?.trim() || 'Bahawalpur Heritage';
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    return 'Bahawalpur Heritage';
+  }
+}
 
 /**
  * Generate an SEO-optimized product description using AI or template

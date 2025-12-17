@@ -275,5 +275,16 @@ export const adminAPI = {
     });
     if (!res.ok) throw new Error('Failed to delete setting');
     return res.json();
+  },
+
+  generateSettingContent: async (field, data = {}) => {
+    const url = `${API_BASE_URL}/api/admin/settings/generate/${field}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: adminAuth.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to generate AI content');
+    return res.json();
   }
 };

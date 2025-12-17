@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Clock, Users, Sparkles } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
-import { productsAPI, collectionsAPI } from '../utils/api';
+import { productsAPI, collectionsAPI, settingsAPI } from '../utils/api';
 import { 
   setPageMeta, 
   getOrganizationSchema, 
@@ -17,6 +17,7 @@ import {
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [collections, setCollections] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,12 +44,14 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, collectionsRes] = await Promise.all([
+      const [productsRes, collectionsRes, settingsData] = await Promise.all([
         productsAPI.getAll({ limit: 6 }),
         collectionsAPI.getAll(),
+        settingsAPI.getAll()
       ]);
       setFeaturedProducts(productsRes.data.data.slice(0, 6));
       setCollections(collectionsRes.data.data);
+      setSettings(settingsData || {});
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

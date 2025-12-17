@@ -1,7 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { body, validationResult } from 'express-validator';
-import { generateSEODescription, validateSEODescription, generatePageContent } from '../utils/aiService.js';
+import { generateSEODescription, validateSEODescription, generatePageContent, generateFooterAbout, generateSiteTagline } from '../utils/aiService.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -887,6 +887,41 @@ router.delete('/settings/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete setting'
+    });
+  }
+});
+
+// POST /api/admin/settings/generate/:field - Generate AI content for specific setting field
+router.post('/settings/generate/:field', async (req, res) => {
+  try {
+    const { field } = req.params;
+    const { businessName } = req.body;
+    
+    let generatedContent = '';
+    
+    switch(field) {
+      case 'footer_about':
+        generatedContent = await generateFooterAbout(businessName || 'Zoey\'s');
+        break;
+      case 'site_tagline':
+        generatedContent = await generateSiteTagline(businessName || 'Zoey\'s');
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid field for AI generation'
+        });
+    }
+
+    res.json({
+      success: true,
+      content: generatedContent
+    });
+  } catch (error) {
+    console.error('Error generating AI content:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate AI content'
     });
   }
 });

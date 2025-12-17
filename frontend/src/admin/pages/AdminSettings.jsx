@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings as SettingsIcon, Plus, Edit2, Trash2, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Edit2, Trash2, Save, Sparkles } from 'lucide-react';
 import { adminAPI } from '../utils/adminAuth';
 import Notification from '../components/notification';
 
@@ -9,6 +9,7 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [editingSettings, setEditingSettings] = useState({});
+  const [generatingAI, setGeneratingAI] = useState({});
 
   const defaultSettings = [
     { key: 'business_name', label: 'Business Name', category: 'general', value: "Zoey's Heritage Embroidery" },
@@ -116,6 +117,28 @@ const AdminSettings = () => {
     }
   };
 
+  const handleGenerateAI = async (field) => {
+    try {
+      setGeneratingAI({ ...generatingAI, [field]: true });
+      
+      const response = await adminAPI.generateSettingContent(field, {
+        businessName: editingSettings.business_name || 'Zoey\'s'
+      });
+
+      setEditingSettings({
+        ...editingSettings,
+        [field]: response.data.content
+      });
+
+      showNotification(`AI generated ${field.replace('_', ' ')} successfully`);
+    } catch (error) {
+      console.error('Error generating AI content:', error);
+      showNotification('Failed to generate AI content', 'error');
+    } finally {
+      setGeneratingAI({ ...generatingAI, [field]: false });
+    }
+  };
+
   const groupedSettings = {};
   const allSettingsKeys = [...new Set([...settings.map(s => s.key), ...defaultSettings.map(s => s.key)])];
   
@@ -190,32 +213,60 @@ const AdminSettings = () => {
             </h2>
 
             <div className="space-y-4">
-              {categorySettings.map((setting) => (
-                <div key={setting.key} className="flex flex-col md:flex-row md:items-center gap-3">
-                  <label className="block text-sm font-medium text-charcoal md:w-1/3">
-                    {setting.label}
-                  </label>
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      value={editingSettings[setting.key] || ''}
-                      onChange={(e) => setEditingSettings({
-                        ...editingSettings,
-                        [setting.key]: e.target.value
-                      })}
-                      className="flex-1 px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder={setting.label}
-                    />
-                    <button
-                      onClick={() => handleSave(setting.key)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors inline-flex items-center gap-2"
-                      title="Save this setting"
-                    >
-                      <Save size={16} />
-                    </button>
+              {categorySettings.map((setting) => {
+                const canGenerateAI = ['footer_about', 'site_tagline'].includes(setting.key);
+                
+                return (
+                  <div key={setting.key} className="flex flex-col md:flex-row md:items-center gap-3">
+                    <label className="block text-sm font-medium text-charcoal md:w-1/3">
+                      {setting.label}
+                    </label>
+                    <div className="flex-1 flex gap-2">
+                      {setting.key === 'footer_about' ? (
+                        <textarea
+                          value={editingSettings[setting.key] || ''}
+                          onChange={(e) => setEditingSettings({
+                            ...editingSettings,
+                            [setting.key]: e.target.value
+                          })}
+                          className="flex-1 px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                          placeholder={setting.label}
+                          rows={3}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={editingSettings[setting.key] || ''}
+                          onChange={(e) => setEditingSettings({
+                            ...editingSettings,
+                            [setting.key]: e.target.value
+                          })}
+                          className="flex-1 px-3 py-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder={setting.label}
+                        />
+                      )}
+                      {canGenerateAI && (
+                        <button
+                          onClick={() => handleGenerateAI(setting.key)}
+                          disabled={generatingAI[setting.key]}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Generate with AI"
+                        >
+                          <Sparkles size={16} className={generatingAI[setting.key] ? 'animate-spin' : ''} />
+                          <span className="hidden lg:inline">AI</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleSave(setting.key)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors inline-flex items-center gap-2"
+                        title="Save this setting"
+                      >
+                        <Save size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         ))}

@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, ChevronDown, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collectionsAPI } from '../utils/api';
+import { collectionsAPI, settingsAPI } from '../utils/api';
 import { useCart } from '../utils/CartContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [collections, setCollections] = useState([]);
+  const [settings, setSettings] = useState({});
   const [showCollections, setShowCollections] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -16,6 +17,7 @@ const Navbar = () => {
 
   useEffect(() => {
     fetchCollections();
+    fetchSettings();
     
     // Handle scroll effect
     const handleScroll = () => {
@@ -31,6 +33,15 @@ const Navbar = () => {
       setCollections(response.data.data);
     } catch (error) {
       console.error('Error fetching collections:', error);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const data = await settingsAPI.getAll();
+      setSettings(data || {});
+    } catch (error) {
+      console.error('Error fetching settings:', error);
     }
   };
 
@@ -70,10 +81,10 @@ const Navbar = () => {
             
             <div className="flex flex-col">
               <div className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-emerald-600 leading-none">
-                Zoey's
+                {settings.business_name || "Zoey's"}
               </div>
               <div className="text-[9px] md:text-xs text-charcoal font-medium tracking-wider uppercase mt-0.5 md:mt-1">
-                Bahawalpur Heritage
+                {settings.site_tagline || 'Bahawalpur Heritage'}
               </div>
             </div>
           </Link>
