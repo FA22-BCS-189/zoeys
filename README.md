@@ -113,9 +113,6 @@ zoeys-ecommerce/
 4. Add environment variables from `.env`
 5. Deploy!
 
-## 📞 Contact
-- WhatsApp: +92 330 0390222
-- Email: zaiinabsanaullah@gmail.com
 
 ## 🔧 Tech Stack
 - **Frontend**: React 18, Vite, Tailwind CSS, Framer Motion
