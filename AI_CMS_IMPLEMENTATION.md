@@ -26,7 +26,7 @@ Successfully implemented a comprehensive AI-powered content management system fo
   - keywords
 - Template fallback system when API unavailable
 
-**API Key:** AIzaSyAcP8mJ2JaUsAwpX9rhytE9K7jDMoovKcI
+**API Key:** apikey
 
 **Example Usage:**
 ```javascript
